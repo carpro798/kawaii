@@ -4,12 +4,18 @@
  */
 
 // Global State
+let savedPreferredServer = localStorage.getItem('kurohoshi_preferred_server');
+if (!savedPreferredServer || savedPreferredServer === 'delta') {
+  savedPreferredServer = 'gamma';
+  localStorage.setItem('kurohoshi_preferred_server', 'gamma');
+}
+
 const STATE = {
   animes: window.KAWAII_ANIMES || [],
   currentView: 'inicio',
   activeAnime: null,
   activeEpisode: 1,
-  currentServer: localStorage.getItem('kurohoshi_preferred_server') || 'epsilon',
+  currentServer: savedPreferredServer,
   currentLanguage: 'sub',
   activeProfile: null,
   exploreFilter: 'animes',
@@ -1243,6 +1249,10 @@ function renderPlayerMedia(anime, epNumber) {
   let availableStreams = allStreams.filter(s => s.lang === chosenLang);
   if (!availableStreams.length) availableStreams = allStreams;
 
+  // Priorizar servidores limpios y sin anuncios (Gamma > Epsilon > Alpha > Delta)
+  const serverPriority = { gamma: 1, epsilon: 2, alpha: 3, delta: 4 };
+  availableStreams.sort((a, b) => (serverPriority[a.server] || 99) - (serverPriority[b.server] || 99));
+
   if (langSelect) {
     langSelect.innerHTML = `
       <option value="sub" ${chosenLang === 'sub' ? 'selected' : ''}>Japonés (Sub)</option>
@@ -1252,11 +1262,21 @@ function renderPlayerMedia(anime, epNumber) {
   }
 
   let activeStream = availableStreams.find(s => s.server === STATE.currentServer) || availableStreams[0];
+  if (activeStream && activeStream.server !== STATE.currentServer) {
+    STATE.currentServer = activeStream.server;
+    localStorage.setItem('kurohoshi_preferred_server', activeStream.server);
+  }
 
   if (serverSelect) {
-    serverSelect.innerHTML = availableStreams.map((s, idx) => `
+    const serverBadges = {
+      gamma: '✨ Servidor Gamma (Recomendado - Sin Anuncios)',
+      epsilon: '🎬 Servidor Epsilon (Rápido)',
+      alpha: '⚡ Servidor Alpha',
+      delta: '🛡️ Servidor Delta (Respaldo)'
+    };
+    serverSelect.innerHTML = availableStreams.map((s) => `
       <option value="${s.server}" ${s.server === (activeStream ? activeStream.server : STATE.currentServer) ? 'selected' : ''}>
-        ⚡ ${s.serverName || s.server}
+        ${serverBadges[s.server] || ('⚡ ' + (s.serverName || s.server))}
       </option>
     `).join('');
   }
@@ -1277,7 +1297,7 @@ function renderPlayerMedia(anime, epNumber) {
   // Si no hay servidor de API local/remoto activo (ej: GitHub Pages o sin server.py en ejecución),
   // intentar extraer HLS directo sin anuncios o cargar embed con escudo anti-popups
   if (!apiServer) {
-    playDirectOrStealth(wrap, anime, epNumber, streamUrl);
+    playDirectOrStealth(wrap, anime, epNumber, streamUrl, activeStream?.server);
     return;
   }
 
@@ -1319,21 +1339,21 @@ function renderPlayerMedia(anime, epNumber) {
           if (errData && errData.fatal) {
             console.warn('[KuroHoshi Player] HLS error fatal, cambiando a reproductor directo:', errData);
             try { hls.destroy(); } catch (e) { }
-            playDirectOrStealth(wrap, anime, epNumber, streamUrl);
+            playDirectOrStealth(wrap, anime, epNumber, streamUrl, activeStream?.server);
           }
         });
         window.activeHls = hls;
       } else if (data && data.status === 'ok' && data.player) {
         // Reproductor Embed con AdBlock Stealth Invisible del backend
-        loadStealthEmbed(wrap, anime, epNumber, `${apiServer}${data.player}`);
+        loadStealthEmbed(wrap, anime, epNumber, `${apiServer}${data.player}`, activeStream?.server);
       } else {
         // Fallback a extractor directo
-        playDirectOrStealth(wrap, anime, epNumber, streamUrl);
+        playDirectOrStealth(wrap, anime, epNumber, streamUrl, activeStream?.server);
       }
     })
     .catch(err => {
       console.warn('[KuroHoshi Player] Backend no disponible o error en stream-info, usando extractor directo:', err);
-      playDirectOrStealth(wrap, anime, epNumber, streamUrl);
+      playDirectOrStealth(wrap, anime, epNumber, streamUrl, activeStream?.server);
     });
 }
 
@@ -1374,12 +1394,12 @@ async function tryExtractDirectHls(streamUrl) {
   return null;
 }
 
-function playDirectOrStealth(wrap, anime, epNumber, streamUrl) {
+function playDirectOrStealth(wrap, anime, epNumber, streamUrl, serverKey = 'gamma') {
   wrap.innerHTML = `
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--text-muted); background:#050508;">
       <div style="font-size:2.2rem; margin-bottom:1rem; animation: pulse 1.5s infinite;">🌸</div>
       <p style="font-weight:600; color:var(--text-main); font-size:1.1rem;">Iniciando reproducción sin anuncios...</p>
-      <span style="font-size:0.8rem; color:var(--text-muted); margin-top:0.4rem;">Escudo activo: bloqueando ventanas emergentes y redirecciones</span>
+      <span style="font-size:0.8rem; color:var(--text-muted); margin-top:0.4rem;">Escudo activo: bloqueando ventanas emergentes y publicidad</span>
     </div>
   `;
 
@@ -1398,19 +1418,19 @@ function playDirectOrStealth(wrap, anime, epNumber, streamUrl) {
       hls.on(Hls.Events.ERROR, function (e, errData) {
         if (errData && errData.fatal) {
           try { hls.destroy(); } catch (e) { }
-          loadStealthEmbed(wrap, anime, epNumber, streamUrl);
+          loadStealthEmbed(wrap, anime, epNumber, streamUrl, serverKey);
         }
       });
       window.activeHls = hls;
     } else {
-      loadStealthEmbed(wrap, anime, epNumber, streamUrl);
+      loadStealthEmbed(wrap, anime, epNumber, streamUrl, serverKey);
     }
   }).catch(() => {
-    loadStealthEmbed(wrap, anime, epNumber, streamUrl);
+    loadStealthEmbed(wrap, anime, epNumber, streamUrl, serverKey);
   });
 }
 
-async function loadStealthEmbed(wrap, anime, epNumber, srcUrl) {
+async function loadStealthEmbed(wrap, anime, epNumber, srcUrl, serverKey = 'gamma') {
   // 1. Fragmento stealth que engaña a detectores e intercepta popups desde adentro
   const stealthSnippet = `
     <base href="${srcUrl}">
@@ -1488,12 +1508,13 @@ async function loadStealthEmbed(wrap, anime, epNumber, srcUrl) {
 
   if (injectedHtml) {
     wrap.innerHTML = `
-      <div class="player-embed-wrapper" style="position:relative; width:100%; height:100%; overflow:hidden;">
+      <div class="player-embed-wrapper" style="position:relative; width:100%; height:100%; overflow:hidden; background:#000;">
         <iframe class="player-iframe"
           title="${anime.title} - Cap ${epNumber}"
           sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-          allowfullscreen>
+          allowfullscreen
+          style="width:100%; height:100%; border:none;">
         </iframe>
       </div>
     `;
@@ -1502,17 +1523,37 @@ async function loadStealthEmbed(wrap, anime, epNumber, srcUrl) {
     return;
   }
 
-  // 3. Fallback directo: sandbox inteligente que bloquea secuestros de pestaña y redirecciones
+  // 3. Fallback directo: Para Gamma y Epsilon (limpios), sandbox estricto SIN popups
+  // Para Delta (Streamwish), sandbox con escape para evitar el cartel anti-adblock
+  const isStrict = (serverKey === 'gamma' || serverKey === 'epsilon');
+  const sandboxPolicy = isStrict
+    ? 'allow-scripts allow-same-origin allow-forms allow-presentation'
+    : 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox';
+
+  const badgeNotice = (serverKey === 'gamma')
+    ? `<div style="position:absolute; top:12px; right:12px; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); color:#4ade80; font-size:0.75rem; font-weight:600; padding:5px 12px; border-radius:20px; z-index:10; pointer-events:none; border:1px solid rgba(74,222,128,0.3); display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(0,0,0,0.5);">
+        <span>✨ Servidor Gamma</span>
+        <span style="opacity:0.7;">• Sin Publicidad</span>
+       </div>`
+    : (serverKey === 'delta'
+      ? `<div style="position:absolute; top:12px; right:12px; background:rgba(30,20,10,0.9); backdrop-filter:blur(8px); color:#fbbf24; font-size:0.75rem; font-weight:600; padding:5px 12px; border-radius:20px; z-index:10; pointer-events:none; border:1px solid rgba(251,191,36,0.4); display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(0,0,0,0.5);">
+        <span>⚡ Servidor Delta</span>
+        <span style="opacity:0.8;">• Si ves publicidad cambia arriba a Servidor Gamma</span>
+       </div>`
+      : '');
+
   wrap.innerHTML = `
-    <div class="player-embed-wrapper" style="position:relative; width:100%; height:100%; overflow:hidden;">
+    <div class="player-embed-wrapper" style="position:relative; width:100%; height:100%; overflow:hidden; background:#000;">
       <iframe class="player-iframe"
         src="${srcUrl}"
         title="${anime.title} - Cap ${epNumber}"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox"
+        sandbox="${sandboxPolicy}"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
         allowfullscreen
-        referrerpolicy="no-referrer">
+        referrerpolicy="no-referrer"
+        style="width:100%; height:100%; border:none;">
       </iframe>
+      ${badgeNotice}
     </div>
   `;
 }

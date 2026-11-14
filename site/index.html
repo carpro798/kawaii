@@ -999,12 +999,32 @@
         };
       };
 
-      // 3. Prevenir que redirecciones externas secuestren la pestaña de la app
+      // 3. Prevenir que redirecciones externas o clics secuestren la pestaña de la app
       let _userNavigating = false;
       document.addEventListener('click', function (e) {
         const link = e.target && e.target.closest ? e.target.closest('a') : null;
-        if (link && !link.closest('#player-media-wrap')) {
-          _userNavigating = true;
+        if (link) {
+          const href = link.getAttribute('href') || '';
+          if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+            try {
+              const u = new URL(link.href, window.location.href);
+              const isAllowed = 
+                u.origin === window.location.origin ||
+                u.hostname.includes('github.io') ||
+                u.hostname.includes('themoviedb.org') ||
+                u.hostname.includes('tmdb.org') ||
+                u.hostname.includes('malcdn.net');
+              if (!isAllowed) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.warn('[Kawaii Stealth] Enlace o anuncio bloqueado:', link.href);
+                return;
+              }
+            } catch(err) {}
+          }
+          if (!link.closest('#player-media-wrap')) {
+            _userNavigating = true;
+          }
         }
       }, true);
 
