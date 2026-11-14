@@ -4,7 +4,7 @@
  * 2. Bloqueador de anuncios y ventanas emergentes sigiloso.
  */
 
-const CACHE_NAME = 'kurohoshi-cache-v7';
+const CACHE_NAME = 'kurohoshi-cache-v8';
 
 // Archivos esenciales para funcionamiento sin internet
 const STATIC_APP_SHELL = [

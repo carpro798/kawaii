@@ -1431,53 +1431,110 @@ function playDirectOrStealth(wrap, anime, epNumber, streamUrl, serverKey = 'gamm
 }
 
 async function loadStealthEmbed(wrap, anime, epNumber, srcUrl, serverKey = 'gamma') {
-  // 1. Fragmento stealth que engaña a detectores e intercepta popups desde adentro
+  // 1. Fragmento stealth — replica exacta de la fórmula del binario cifrado (.app)
   const stealthSnippet = `
     <base href="${srcUrl}">
     <script>
+    (function(){
+      'use strict';
+      // --- Neutralizar detectores de AdBlock (justDetectAdblock, FuckAdBlock, etc.) ---
+      window.justDetectAdblock = { detectAnyAdblocker: () => Promise.resolve(false), detectBait: () => Promise.resolve(false) };
+      window.__adbDetected = false;
       window.canRunAds = true;
       window.isAdBlockActive = false;
-      window.__adbDetected = false;
       window.adblock = false;
       window.adBlockDetected = false;
-      window.showADBOverlay = function() {};
-      window.showGuardOverlay = function() {};
-      window.checkADB = function() { return false; };
-      window.justDetectAdblock = { detectAnyAdblocker: function(){ return Promise.resolve(false); }, detectBait: function(){ return Promise.resolve(false); } };
-      
-      const fakeWin = {
-        closed: false,
-        name: '',
-        focus: function() {},
-        blur: function() {},
-        close: function() { this.closed = true; },
-        location: { href: '', replace: function(){} },
-        document: { write: function(){}, close: function(){} }
+      window.hasAdBlock = false;
+      window.isAdblock = false;
+      window.FuckAdBlock = function(){
+        this.on = () => this;
+        this.onDetected = () => this;
+        this.onNotDetected = fn => { if(typeof fn==='function') setTimeout(fn,1); return this; };
+        this.check = () => false;
       };
-      window.open = function(u) {
-        console.log('[Kawaii Stealth] Popup publicitario interceptado:', u);
-        return fakeWin;
-      };
+      window.fuckAdBlock = new window.FuckAdBlock();
+      window.BlockAdBlock = window.FuckAdBlock;
+      window.blockAdBlock = window.fuckAdBlock;
 
-      document.addEventListener('click', function(e) {
+      // --- Silenciar overlays de servidores (Lulu, Streamwish, VOE) ---
+      window.showADBOverlay  = () => {};
+      window.showGuardOverlay = () => {};
+      window.checkADB = () => false;
+      window.sk = true;  // flag bypass VOE
+
+      // --- Interceptar popups ---
+      const _fakeWin = {
+        closed: false, name: '',
+        focus(){}, blur(){},
+        close(){ this.closed = true; },
+        location: { href: '', replace(){} },
+        document: { write(){}, close(){} }
+      };
+      window.open = u => { console.log('[Kawaii Stealth] Popup bloqueado:', u); return _fakeWin; };
+
+      // --- Bloquear clicks en dominios externos (anuncios) ---
+      document.addEventListener('click', e => {
         const a = e.target && e.target.closest ? e.target.closest('a') : null;
         if (a && a.href && !a.href.startsWith('javascript:')) {
           try {
             const u = new URL(a.href);
             if (u.hostname !== window.location.hostname && !u.hostname.includes('tmdb.org')) {
-              e.preventDefault();
-              e.stopPropagation();
+              e.preventDefault(); e.stopPropagation();
             }
-          } catch(err) {}
+          } catch(_) {}
         }
       }, true);
+
+      // --- Eliminar loops debugger ---
+      const _origSI = window.setInterval;
+      window.setInterval = (fn, d) => {
+        if (fn && typeof fn === 'function' && fn.toString().includes('debugger')) return -1;
+        return _origSI.apply(window, arguments);
+      };
+
+      // --- Bloquear visibilidad de overlays via MutationObserver ---
+      const _hideAds = () => {
+        const sel = [
+          '.a85399','.b85399','#adbd','.overdiv','#overdiv',
+          '.jw-rightclick','.jw-logo-button','.adblock-banner',
+          '#adblock-msg','.adb-holder',
+          '[id*="adblock"],[class*="adblock"]',
+          '[id*="anti-adblock"],[class*="anti-adblock"]',
+          '[id*="ad-overlay"],[class*="ad-overlay"]'
+        ].join(',');
+        try {
+          document.querySelectorAll(sel).forEach(el => {
+            el.style.cssText = 'display:none!important;opacity:0!important;pointer-events:none!important;visibility:hidden!important';
+          });
+          document.querySelectorAll('div').forEach(el => {
+            const z = parseInt((el.style.zIndex || getComputedStyle(el).zIndex), 10);
+            if (z >= 999 && !el.closest('video') && !el.closest('.jw-container')) {
+              const r = el.getBoundingClientRect();
+              if (r.width > 50 && r.height > 50) {
+                el.style.cssText = 'display:none!important;opacity:0!important;pointer-events:none!important';
+              }
+            }
+          });
+        } catch(_) {}
+      };
+      const _obs = new MutationObserver(_hideAds);
+      document.addEventListener('DOMContentLoaded', () => {
+        _hideAds();
+        _obs.observe(document.body, { childList: true, subtree: true });
+      });
+      setTimeout(_hideAds, 500);
+      setTimeout(_hideAds, 1500);
+      setTimeout(_hideAds, 3000);
+    })();
     <\/script>
     <style>
-      .overdiv, #overdiv, .jw-rightclick, .jw-logo-button,
-      .a85399, .b85399, #adbd,
-      div[style*="z-index: 999"], div[style*="z-index: 1000000"], div[style*="z-index: 2147483647"] {
+      .a85399,.b85399,#adbd,.overdiv,#overdiv,.jw-rightclick,.jw-logo-button,
+      [class*="ad-overlay"],[id*="ad-overlay"],[id*="adblock"],[class*="adblock"],
+      [id*="anti-adblock"],.adblock-banner,#adblock-msg,.adb-holder {
         display: none !important;
+        opacity: 0 !important;
         pointer-events: none !important;
+        visibility: hidden !important;
       }
     </style>
   `;
