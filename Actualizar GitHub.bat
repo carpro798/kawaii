@@ -15,6 +15,12 @@ echo.
 echo [2/2] Subiendo cambios a GitHub...
 git push -u origin main
 
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo Sincronizando con el repositorio remoto...
+    git push -u origin main --force
+)
+
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo ======================================================
