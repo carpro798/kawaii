@@ -1410,12 +1410,105 @@ function playDirectOrStealth(wrap, anime, epNumber, streamUrl) {
   });
 }
 
-function loadStealthEmbed(wrap, anime, epNumber, srcUrl) {
+async function loadStealthEmbed(wrap, anime, epNumber, srcUrl) {
+  // 1. Fragmento stealth que engaña a detectores e intercepta popups desde adentro
+  const stealthSnippet = `
+    <base href="${srcUrl}">
+    <script>
+      window.canRunAds = true;
+      window.isAdBlockActive = false;
+      window.__adbDetected = false;
+      window.adblock = false;
+      window.adBlockDetected = false;
+      window.showADBOverlay = function() {};
+      window.showGuardOverlay = function() {};
+      window.checkADB = function() { return false; };
+      window.justDetectAdblock = { detectAnyAdblocker: function(){ return Promise.resolve(false); }, detectBait: function(){ return Promise.resolve(false); } };
+      
+      const fakeWin = {
+        closed: false,
+        name: '',
+        focus: function() {},
+        blur: function() {},
+        close: function() { this.closed = true; },
+        location: { href: '', replace: function(){} },
+        document: { write: function(){}, close: function(){} }
+      };
+      window.open = function(u) {
+        console.log('[Kawaii Stealth] Popup publicitario interceptado:', u);
+        return fakeWin;
+      };
+
+      document.addEventListener('click', function(e) {
+        const a = e.target && e.target.closest ? e.target.closest('a') : null;
+        if (a && a.href && !a.href.startsWith('javascript:')) {
+          try {
+            const u = new URL(a.href);
+            if (u.hostname !== window.location.hostname && !u.hostname.includes('tmdb.org')) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          } catch(err) {}
+        }
+      }, true);
+    <\/script>
+    <style>
+      .overdiv, #overdiv, .jw-rightclick, .jw-logo-button,
+      .a85399, .b85399, #adbd,
+      div[style*="z-index: 999"], div[style*="z-index: 1000000"], div[style*="z-index: 2147483647"] {
+        display: none !important;
+        pointer-events: none !important;
+      }
+    </style>
+  `;
+
+  // 2. Intentar descargar el HTML e inyectar protección stealth en srcdoc
+  const corsProxies = [
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
+  ];
+
+  let injectedHtml = null;
+  for (const getProxy of corsProxies) {
+    try {
+      const resp = await fetch(getProxy(srcUrl), { signal: AbortSignal.timeout(3000) });
+      if (resp.ok) {
+        const raw = await resp.text();
+        if (raw && (raw.includes('<video') || raw.includes('player') || raw.includes('eval('))) {
+          injectedHtml = raw.replace('<head>', '<head>' + stealthSnippet);
+          if (!injectedHtml.includes('canRunAds')) {
+            injectedHtml = stealthSnippet + raw;
+          }
+          break;
+        }
+      }
+    } catch(e) {}
+  }
+
+  if (injectedHtml) {
+    wrap.innerHTML = `
+      <div class="player-embed-wrapper" style="position:relative; width:100%; height:100%; overflow:hidden;">
+        <iframe class="player-iframe"
+          title="${anime.title} - Cap ${epNumber}"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+          allowfullscreen>
+        </iframe>
+      </div>
+    `;
+    const frame = wrap.querySelector('iframe');
+    frame.srcdoc = injectedHtml;
+    return;
+  }
+
+  // 3. Fallback directo: sandbox inteligente que bloquea secuestros de pestaña y redirecciones
   wrap.innerHTML = `
     <div class="player-embed-wrapper" style="position:relative; width:100%; height:100%; overflow:hidden;">
       <iframe class="player-iframe"
         src="${srcUrl}"
         title="${anime.title} - Cap ${epNumber}"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
         allowfullscreen
         referrerpolicy="no-referrer">
