@@ -1511,7 +1511,6 @@ async function loadStealthEmbed(wrap, anime, epNumber, srcUrl, serverKey = 'gamm
       <div class="player-embed-wrapper" style="position:relative; width:100%; height:100%; overflow:hidden; background:#000;">
         <iframe class="player-iframe"
           title="${anime.title} - Cap ${epNumber}"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
           allowfullscreen
           style="width:100%; height:100%; border:none;">
@@ -1523,13 +1522,8 @@ async function loadStealthEmbed(wrap, anime, epNumber, srcUrl, serverKey = 'gamm
     return;
   }
 
-  // 3. Fallback directo: Para Gamma y Epsilon (limpios), sandbox estricto SIN popups
-  // Para Delta (Streamwish), sandbox con escape para evitar el cartel anti-adblock
-  const isStrict = (serverKey === 'gamma' || serverKey === 'epsilon');
-  const sandboxPolicy = isStrict
-    ? 'allow-scripts allow-same-origin allow-forms allow-presentation'
-    : 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox';
-
+  // 3. Fallback directo: Sin atributo sandbox para que servidores como Gamma (VOE)
+  // no activen el detector "Sandbox no permitido / Nuestra infraestructura cuesta dinero"
   const badgeNotice = (serverKey === 'gamma')
     ? `<div style="position:absolute; top:12px; right:12px; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); color:#4ade80; font-size:0.75rem; font-weight:600; padding:5px 12px; border-radius:20px; z-index:10; pointer-events:none; border:1px solid rgba(74,222,128,0.3); display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(0,0,0,0.5);">
         <span>✨ Servidor Gamma</span>
@@ -1547,7 +1541,6 @@ async function loadStealthEmbed(wrap, anime, epNumber, srcUrl, serverKey = 'gamm
       <iframe class="player-iframe"
         src="${srcUrl}"
         title="${anime.title} - Cap ${epNumber}"
-        sandbox="${sandboxPolicy}"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
         allowfullscreen
         referrerpolicy="no-referrer"
