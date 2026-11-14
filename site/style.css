@@ -1,0 +1,2354 @@
+/* ==========================================================================
+   KAWAII ANIMES - Official Dark Theme (Replica exacta de la App Original)
+   ========================================================================== */
+
+:root {
+  --bg-main: #000000;
+  --bg-surface: #0a0a0e;
+  --bg-card: #121217;
+  --bg-card-hover: #1c1c24;
+  --bg-sidebar: #050508;
+  
+  --primary: #e50914;
+  --primary-glow: rgba(229, 9, 20, 0.4);
+  --primary-dark: #b80710;
+  --accent-gold: #ffbe2e;
+  --accent-green: #10b981;
+  --accent-blue: #0070f3;
+  --accent-red: #ef4444;
+
+  --text-main: #ffffff;
+  --text-muted: #9e9ea7;
+  --text-dim: #63636e;
+
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-hover: rgba(229, 9, 20, 0.5);
+
+  --sidebar-width: 78px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  --font-sans: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --transition: all 0.22s ease-in-out;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: var(--font-sans);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+body.app-body {
+  min-height: 100vh;
+  display: flex;
+  background-color: var(--bg-main);
+  overflow-x: hidden;
+  position: relative;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior-y: none;
+}
+
+input,
+textarea {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
+/* Falling Sakura canvas */
+#sakura-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: #22222a;
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* ==========================================================================
+   SIDEBAR LATERAL (Estilo Kawaii Animes)
+   ========================================================================== */
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0;
+  z-index: 90;
+  user-select: none;
+}
+
+.sidebar-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.sidebar-logo-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.sidebar-logo-sub {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.2px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 0.5rem;
+  overflow-y: auto;
+}
+
+.sidebar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 0.65rem 0;
+  text-decoration: none;
+  color: var(--text-muted);
+  transition: var(--transition);
+  border-left: 3px solid transparent;
+}
+
+.sidebar-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sidebar-item.active {
+  color: #fff;
+  border-left-color: var(--primary);
+  background: rgba(229, 9, 20, 0.08);
+}
+
+.sidebar-icon {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.sidebar-icon svg {
+  display: block;
+  color: inherit;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+}
+
+.sidebar-item:hover .sidebar-icon svg,
+.sidebar-item.active .sidebar-icon svg {
+  opacity: 1;
+}
+
+.sidebar-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.sidebar-avatar-wrap {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+}
+
+.sidebar-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ==========================================================================
+   MAIN CONTENT WRAPPER & VIEWS
+   ========================================================================== */
+.app-main-content {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  min-width: 0;
+  padding: 1.25rem 2rem 5rem 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.view-section {
+  display: none;
+  animation: fadeIn 0.25s ease forwards;
+}
+
+.view-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   TOP RED BANNER (Actualizar catálogo y cuenta)
+   ========================================================================== */
+.kurohoshi-top-banner,
+.kawaii-top-banner {
+  background: var(--primary);
+  color: #ffffff;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 1.25rem;
+  transition: var(--transition);
+  box-shadow: 0 4px 14px rgba(229, 9, 20, 0.3);
+}
+
+.kawaii-top-banner:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   HERO BANNER
+   ========================================================================== */
+.hero-slider {
+  position: relative;
+  height: 380px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 2rem;
+  background: #000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  display: flex;
+  align-items: flex-end;
+  padding: 2.5rem 3rem;
+}
+
+.hero-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hero-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  z-index: 0;
+}
+
+.hero-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0.2) 100%),
+              linear-gradient(90deg, rgba(0,0,0,0.85) 0%, transparent 60%);
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 650px;
+}
+
+.hero-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 0.6rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.hero-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+  color: #ddd;
+  margin-bottom: 1rem;
+}
+
+.hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #111;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 0.65rem 1.4rem;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.hero-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+/* ==========================================================================
+   CAROUSELS (Seguir Viendo, Recientes, Latinos)
+   ========================================================================== */
+.carousel-container {
+  margin-bottom: 2.25rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.section-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: var(--transition);
+}
+
+.section-link:hover {
+  color: var(--primary);
+}
+
+.carousel-track {
+  display: flex;
+  gap: 0.9rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+  scroll-snap-type: x mandatory;
+}
+
+/* Horizontal 16:9 Cards (Seguir Viendo / Recientes) */
+.h-card {
+  flex: 0 0 240px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid var(--border-subtle);
+}
+
+.h-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-hover);
+}
+
+.h-card-thumb-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #0d0d12;
+  overflow: hidden;
+}
+
+.h-card-thumb-wrap.shimmer-loading {
+  background: linear-gradient(110deg, #111116 8%, #1c1c24 18%, #111116 33%);
+  background-size: 200% 100%;
+  animation: shimmerCard 1.8s linear infinite;
+}
+
+.h-card-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.35s ease;
+}
+
+.h-card-close-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: none;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: var(--transition);
+}
+
+.h-card-close-btn:hover {
+  background: var(--primary);
+}
+
+.h-card-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.h-card-progress-fill {
+  height: 100%;
+  background: var(--primary);
+}
+
+.h-card-badge-right {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.h-card-info {
+  padding: 0.6rem 0.75rem;
+}
+
+.h-card-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.h-card-sub {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* Vertical Poster Cards (Porque viste / Latinos / Populares) */
+.v-card {
+  flex: 0 0 155px;
+  background: transparent;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.v-card:hover {
+  transform: translateY(-4px);
+}
+
+.v-card-poster-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: #0d0d12;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  margin-bottom: 0.45rem;
+}
+
+.v-card-poster-wrap.shimmer-loading {
+  background: linear-gradient(110deg, #111116 8%, #1c1c24 18%, #111116 33%);
+  background-size: 200% 100%;
+  animation: shimmerCard 1.8s linear infinite;
+}
+
+@keyframes shimmerCard {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.v-card-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.35s ease;
+}
+
+.v-card-tv-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.v-card-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #e5e5ea;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Grid for search & explore */
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 1.1rem;
+}
+
+/* ==========================================================================
+   VIEW: BUSCAR (SEARCH)
+   ========================================================================== */
+.search-page-header {
+  margin-bottom: 1.75rem;
+}
+
+.search-bar-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #141418;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.5rem;
+}
+
+.search-icon-inside {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin-left: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon-inside svg {
+  display: block;
+}
+
+.search-input-large {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 0.95rem;
+  padding: 0.65rem 0.75rem;
+  font-family: inherit;
+}
+
+.search-filter-icon {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  padding: 0.4rem;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   VIEW: EXPLORAR (CATEGORY PILLS)
+   ========================================================================== */
+.category-chips-bar {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  padding-bottom: 0.25rem;
+}
+
+.cat-pill {
+  background: #18181f;
+  color: #bbb;
+  border: 1px solid var(--border-light);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.cat-pill:hover {
+  background: #252530;
+  color: #fff;
+}
+
+.cat-pill.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.catalog-subsearch {
+  margin-bottom: 1.5rem;
+}
+
+.catalog-subsearch input {
+  width: 100%;
+  background: #121217;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1rem;
+  color: #fff;
+  font-family: inherit;
+  outline: none;
+}
+
+/* ==========================================================================
+   VIEW: CALENDARIO (TABS SEMANALES ESTILO CRUNCHYROLL / STREAMING)
+   ========================================================================== */
+.calendar-days {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.35rem 0.2rem 1.25rem 0.2rem;
+  margin-bottom: 1.5rem;
+  scrollbar-width: thin;
+}
+
+.calendar-days::-webkit-scrollbar {
+  height: 4px;
+}
+
+.calendar-days::-webkit-scrollbar-thumb {
+  background: #333344;
+  border-radius: 4px;
+}
+
+.day-tab {
+  background: #14141c;
+  color: #a0a0b2;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 1.4rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  min-width: 110px;
+  text-align: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+}
+
+.day-tab:hover {
+  background: #20202d;
+  color: #ffffff;
+  border-color: rgba(229, 9, 20, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+.day-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(229, 9, 20, 0.45);
+}
+
+.day-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.day-badge-today {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   VIEW: GÉNEROS (PALETA DE 40 BOTONES EXACTA)
+   ========================================================================== */
+.genres-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.65rem;
+}
+
+.genre-palette-btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 0.5rem;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.genre-palette-btn:hover {
+  filter: brightness(1.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
+}
+
+/* ==========================================================================
+   VIEW: PERFIL (Estilo Original Screenshot 6)
+   ========================================================================== */
+.profile-card-original {
+  background: #101014;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.profile-card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.profile-avatar-container {
+  position: relative;
+  width: 90px;
+  height: 90px;
+}
+
+.profile-main-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #1c1c24;
+}
+
+.profile-main-frame-img {
+  position: absolute;
+  inset: -12%;
+  width: 124%;
+  height: 124%;
+  pointer-events: none;
+  object-fit: contain;
+}
+
+.profile-sub-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-role {
+  background: #1f1f28;
+  color: #ccc;
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.btn-text-badge {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-text-badge:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.profile-card-center {
+  flex: 1;
+  min-width: 200px;
+}
+
+.profile-username-text {
+  font-size: 1.9rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.profile-account-type {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.profile-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.btn-primary-blue {
+  background: #0070f3;
+  color: #fff;
+  border: none;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-primary-blue:hover {
+  background: #0060d0;
+}
+
+.btn-dark-subtle {
+  background: #22222a;
+  color: #ddd;
+  border: none;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-dark-subtle:hover {
+  background: #2c2c36;
+  color: #fff;
+}
+
+.btn-dark-maroon {
+  background: #3a161b;
+  color: #ff9da8;
+  border: none;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-dark-maroon:hover {
+  background: #4a1c23;
+  color: #fff;
+}
+
+.points-badge-gold {
+  background: #443714;
+  color: #ffbe2e;
+  border: 1px solid rgba(255, 190, 46, 0.4);
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+
+/* Tu biblioteca (4 cards with red cute mascot) */
+.library-section {
+  margin-bottom: 2.5rem;
+}
+
+.library-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.library-stat-card {
+  background: #111116;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.library-stat-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  background: #16161d;
+}
+
+.stat-card-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-card-icon {
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.stat-card-icon svg {
+  display: block;
+}
+
+.stat-card-count {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.stat-card-name {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.stat-card-mascot {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+.library-summary-bar {
+  background: #101014;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3.5rem;
+}
+
+.summary-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.summary-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.summary-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.summary-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--border-light);
+}
+
+/* ==========================================================================
+   VIEW: AJUSTES (CONFIGURACIÓN - Screenshot 7)
+   ========================================================================== */
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.settings-back-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.settings-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.settings-content {
+  max-width: 800px;
+}
+
+.settings-group {
+  margin-bottom: 2.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 1.5rem;
+}
+
+.settings-group-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+}
+
+.setting-item.clickable {
+  cursor: pointer;
+}
+
+.setting-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-right: 1.5rem;
+}
+
+.setting-item-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #e5e5ea;
+}
+
+.setting-item-desc {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #33333d;
+  transition: .25s;
+  border-radius: 34px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .25s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: var(--primary);
+}
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* ==========================================================================
+   INTRO SPLASH CINEMÁTICO (KuroHoshi "Ta-Dum" Cinematic)
+   ========================================================================== */
+.intro-splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: radial-gradient(circle at center, #1c0508 0%, #060609 70%, #000000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 1;
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.intro-splash-screen.fade-out {
+  opacity: 0;
+  transform: scale(1.08);
+  pointer-events: none;
+}
+
+.intro-splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  user-select: none;
+}
+
+.intro-cosmic-glow {
+  display: none;
+}
+
+.intro-logo-wrap {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  margin-bottom: 1.5rem;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: logoCinematicIntro 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes logoCinematicIntro {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) translateY(20px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05) translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.intro-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 24px;
+  display: block;
+}
+
+.intro-light-beam {
+  display: none;
+}
+
+.intro-brand-title {
+  font-size: 2.3rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 4px;
+  text-shadow: 0 0 25px rgba(229, 9, 20, 0.75), 0 2px 10px rgba(0, 0, 0, 0.8);
+  animation: titleExpandReveal 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes titleExpandReveal {
+  0% {
+    opacity: 0;
+    letter-spacing: 0px;
+    transform: translateY(10px);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    letter-spacing: 7px;
+    transform: translateY(0);
+  }
+}
+
+.intro-brand-sub {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ff5e73;
+  letter-spacing: 3px;
+  margin-top: 0.4rem;
+  opacity: 0;
+  animation: subReveal 1.5s 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes subReveal {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 0.9; transform: translateY(0); }
+}
+
+.intro-loader-line {
+  width: 140px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin-top: 1.75rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.intro-loader-progress {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #ff2a4b, #ffffff, #ff2a4b);
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.8);
+  animation: loaderProgressFill 2.1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes loaderProgressFill {
+  0% { width: 0%; }
+  60% { width: 75%; }
+  100% { width: 100%; }
+}
+
+.intro-skip-hint {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-top: 1.25rem;
+  opacity: 0;
+  animation: hintFadeIn 1s 1s ease forwards;
+}
+
+@keyframes hintFadeIn {
+  from { opacity: 0; }
+  to { opacity: 0.6; }
+}
+
+/* ==========================================================================
+   TRANSICIÓN DE PERFIL CINEMÁTICA (Zoom In & Warp)
+   ========================================================================== */
+.netflix-profile-card {
+  transition: transform 0.35s ease, opacity 0.35s ease, filter 0.35s ease;
+}
+
+.profile-card-fade-out {
+  opacity: 0 !important;
+  transform: scale(0.85) translateY(10px) !important;
+  filter: blur(4px) !important;
+  pointer-events: none !important;
+}
+
+.profile-card-selected-zoom {
+  animation: profileSelectedCinematic 0.68s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  pointer-events: none !important;
+  z-index: 100 !important;
+}
+
+@keyframes profileSelectedCinematic {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  45% {
+    transform: scale(1.18) translateY(-6px);
+    filter: brightness(1.25) drop-shadow(0 0 35px rgba(229, 9, 20, 0.95));
+  }
+  100% {
+    transform: scale(1.4) translateY(-14px);
+    opacity: 0;
+    filter: brightness(1.5) drop-shadow(0 0 60px rgba(229, 9, 20, 1));
+  }
+}
+
+/* ==========================================================================
+   NETFLIX PROFILE SCREEN ("¿Quién está viendo?")
+   ========================================================================== */
+.netflix-overlay {
+  position: fixed;
+  inset: 0;
+  background: #141414;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  padding: 2rem;
+}
+
+.netflix-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.netflix-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 900px;
+  width: 100%;
+}
+
+.netflix-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.netflix-brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.netflix-brand-text {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.5px;
+}
+
+.netflix-title {
+  font-size: 2.8rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 2.5rem;
+  letter-spacing: -0.5px;
+}
+
+.netflix-profiles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.netflix-profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.netflix-profile-card:hover {
+  transform: scale(1.06);
+}
+
+.netflix-avatar-wrap {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 3px solid transparent;
+  background: #222;
+  transition: var(--transition);
+  position: relative;
+}
+
+.netflix-profile-card:hover .netflix-avatar-wrap {
+  border-color: #ffffff;
+}
+
+.netflix-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.netflix-profile-name {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.netflix-profile-card:hover .netflix-profile-name {
+  color: #ffffff;
+}
+
+/* Add profile card */
+.netflix-card-add .netflix-avatar-wrap {
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.netflix-add-icon {
+  font-size: 3rem;
+  color: var(--text-dim);
+  transition: var(--transition);
+}
+
+.netflix-card-add:hover .netflix-add-icon {
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   FLOATING BUTTON: + REDES SOCIALES
+   ========================================================================== */
+.floating-social-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 0.65rem 1.35rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(229, 9, 20, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 80;
+  transition: var(--transition);
+}
+
+.floating-social-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 25px rgba(229, 9, 20, 0.6);
+}
+
+/* Social links modal */
+.social-modal-content {
+  max-width: 500px;
+  background: #141418;
+}
+
+.social-links-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.social-card-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #1a1a22;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  text-decoration: none;
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+}
+
+.social-coming-soon {
+  display: inline-block;
+  background: rgba(229, 9, 20, 0.16);
+  color: #ff7081;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid rgba(229, 9, 20, 0.35);
+  margin-top: 4px;
+  width: fit-content;
+}
+
+@keyframes socialPulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.03); border-color: var(--primary); box-shadow: 0 0 16px rgba(229, 9, 20, 0.4); }
+  100% { transform: scale(1); }
+}
+
+.social-card-item.social-coming-pulse {
+  animation: socialPulse 0.5s ease;
+}
+
+.social-card-item:hover {
+  background: #242430;
+  border-color: var(--primary);
+  transform: translateX(4px);
+}
+
+.social-card-icon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.social-card-icon svg {
+  display: block;
+}
+
+.social-card-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.social-card-text span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   MODALS: GENERAL, EDIT & CREATE PROFILE
+   ========================================================================== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modal-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background: #141419;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  max-width: 850px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  padding: 2rem;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #252530;
+  color: #fff;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.modal-close-btn:hover {
+  background: var(--primary);
+}
+
+.create-profile-modal-content {
+  max-width: 520px;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #e5e5ea;
+}
+
+.form-input {
+  width: 100%;
+  background: #0c0c10;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+  color: #fff;
+  font-family: inherit;
+  outline: none;
+  font-size: 0.95rem;
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+}
+
+.avatar-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.avatar-preview-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary);
+  background: #222;
+}
+
+.upload-btn-label {
+  display: inline-block;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.preset-avatars-row {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+}
+
+.preset-avatar-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: var(--transition);
+}
+
+.preset-avatar-thumb:hover {
+  transform: scale(1.1);
+  border-color: #fff;
+}
+
+.preset-avatar-thumb.selected {
+  border-color: var(--primary);
+  transform: scale(1.1);
+}
+
+/* ==========================================================================
+   BUTTONS & GENERAL COMPONENTS
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+.btn-primary:hover {
+  filter: brightness(1.15);
+}
+
+.btn-secondary {
+  background: #22222a;
+  color: #eee;
+  border: 1px solid var(--border-light);
+}
+.btn-secondary:hover {
+  background: #2d2d38;
+  color: #fff;
+}
+
+/* Player Modal */
+.player-modal-content {
+  max-width: 1050px;
+  padding: 0;
+  background: #000;
+}
+
+.player-video-container {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #050508;
+  position: relative;
+}
+
+.player-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #000;
+}
+
+.player-video {
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+.player-controls-bar {
+  background: #101014;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.player-anime-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.player-ep-name {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.filter-select {
+  background: #181820;
+  color: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.75rem;
+  outline: none;
+}
+
+/* Detail modal */
+.detail-header {
+  position: relative;
+  height: 220px;
+  margin: -2rem -2rem 0 -2rem;
+  overflow: hidden;
+}
+
+.detail-backdrop {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #141419 0%, transparent 100%);
+}
+
+.detail-body {
+  position: relative;
+  display: flex;
+  gap: 1.5rem;
+  margin-top: -80px;
+  margin-bottom: 1.5rem;
+}
+
+.detail-poster-wrap {
+  flex: 0 0 150px;
+  height: 220px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
+}
+
+.detail-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+}
+
+.episodes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+  gap: 0.5rem;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.episode-btn {
+  padding: 0.5rem 0.3rem;
+  background: #1c1c24;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: #eee;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.episode-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.episode-btn.watched {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+/* Appearance frames */
+.frames-carousel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 1rem;
+}
+
+.frame-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: #1c1c24;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: var(--transition);
+}
+
+.frame-item:hover, .frame-item.selected {
+  border-color: var(--primary);
+}
+
+.frame-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.frame-name {
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* Toast */
+.kurohoshi-toast,
+.kawaii-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 100px;
+  background: rgba(18, 18, 24, 0.96);
+  color: #fff;
+  border: 1px solid var(--primary);
+  box-shadow: 0 10px 30px rgba(229, 9, 20, 0.35);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-weight: 600;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.kurohoshi-toast.show,
+.kawaii-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Downloads view */
+.dl-info-banner {
+  background: #14141a;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+}
+
+.downloads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.dl-card {
+  background: #141419;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.dl-poster-wrap {
+  width: 100%;
+  height: 140px;
+  overflow: hidden;
+}
+
+.dl-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dl-info {
+  padding: 0.75rem;
+}
+
+.dl-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dl-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0.5rem 0;
+}
+
+/* Active Download Progress */
+.dl-active-card {
+  background: #14141d;
+  border: 1px solid rgba(255, 26, 64, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 4px 15px rgba(255, 26, 64, 0.1);
+}
+.dl-active-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+  font-size: 0.88rem;
+}
+.dl-active-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.dl-active-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff1a40, #ff4d6d);
+  transition: width 0.3s ease;
+}
+
+/* Downloaded Episodes Modal List */
+.downloaded-eps-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+.dl-ep-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #121218;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  transition: background 0.15s ease;
+}
+.dl-ep-card:hover {
+  background: #181822;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.dl-ep-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+.dl-ep-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid #10b981;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.dl-ep-size {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.dl-ep-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Responsive mobile */
+@media (max-width: 800px) {
+  .app-sidebar {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    flex-direction: row;
+    padding: 0 0.5rem;
+    border-right: none;
+    border-top: 1px solid var(--border-light);
+    background: #09090d;
+  }
+  .sidebar-top { display: none; }
+  .sidebar-nav { flex-direction: row; justify-content: space-around; overflow-x: auto; gap: 0; }
+  .sidebar-item { padding: 0.3rem 0; border-left: none; border-bottom: 3px solid transparent; }
+  .sidebar-item.active { border-left-color: transparent; border-bottom-color: var(--primary); }
+  .sidebar-label { font-size: 0.65rem; }
+  .sidebar-icon { font-size: 1.15rem; }
+  
+  .app-main-content { 
+    margin-left: 0; 
+    padding: 0.75rem 0.85rem 5.5rem 0.85rem; 
+  }
+  
+  .hero-slider {
+    height: 250px;
+    margin-bottom: 1.5rem;
+  }
+  .hero-slide {
+    padding: 1.25rem 1rem;
+  }
+  .hero-title {
+    font-size: 1.35rem;
+  }
+  .hero-meta-row {
+    font-size: 0.78rem;
+    margin-bottom: 0.6rem;
+  }
+  .hero-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* Cards sizes on phone */
+  .h-card { flex: 0 0 200px; }
+  .v-card { flex: 0 0 130px; }
+  .catalog-grid { grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 0.75rem; }
+
+  /* Netflix Screen on phone */
+  .netflix-title { font-size: 1.9rem; margin-bottom: 2rem; }
+  .netflix-avatar-wrap { width: 95px; height: 95px; }
+  .netflix-profiles-grid { gap: 1.25rem; }
+
+  /* Profile Card on phone */
+  .profile-card-original {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.25rem 1rem;
+    gap: 1rem;
+  }
+  .profile-card-right {
+    align-items: center;
+    width: 100%;
+    gap: 0.4rem;
+  }
+  .profile-card-right .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .library-grid-4 {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  .library-summary-bar {
+    gap: 1.5rem;
+    padding: 0.75rem 1rem;
+  }
+  .summary-number { font-size: 1.25rem; }
+
+  /* Modals on phone */
+  .modal-content {
+    padding: 1.25rem 1rem;
+    max-height: 94vh;
+  }
+  .detail-body {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: -60px;
+  }
+  .detail-poster-wrap {
+    flex: 0 0 160px;
+    height: 230px;
+  }
+  
+  .floating-social-btn { bottom: 70px; right: 15px; font-size: 0.78rem; padding: 0.5rem 1rem; }
+  .kurohoshi-toast,
+  .kawaii-toast { left: 15px; right: 15px; bottom: 70px; text-align: center; }
+}
+
+
+/* ── Botón "Cargar más animes" (Explorar lazy load) ─────────────────────── */
+.explore-load-more-btn {
+  display: block;
+  margin: 1.5rem auto;
+  padding: 0.75rem 2rem;
+  background: #1a1a1a;
+  border: 1.5px solid var(--primary);
+  color: var(--primary);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  letter-spacing: 0.03em;
+}
+.explore-load-more-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+.explore-load-more-btn span {
+  opacity: 0.75;
+  font-weight: 400;
+  font-size: 0.85em;
+  margin-left: 0.4em;
+}
+
+
+/* ==========================================================================
+   MODO TV Y MANDO (GAMEPAD & ANDROID TV NAVIGATION)
+   ========================================================================== */
+
+/* En modo TV, suprimir el outline feo por defecto de navegadores */
+body.tv-mode *:focus {
+  outline: none;
+}
+
+/* Indicador de Foco TV de Alto Contraste (visible a 3 metros de distancia) */
+.tv-focused {
+  outline: 3px solid #ff1a40 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 25px rgba(255, 26, 64, 0.85), 0 0 10px rgba(255, 255, 255, 0.5) !important;
+  transform: scale(1.06) translateY(-4px) !important;
+  z-index: 99 !important;
+  transition: transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.16s ease, outline-color 0.16s ease !important;
+}
+
+/* Tarjetas Verticales (Posters) */
+.v-card.tv-focused {
+  transform: scale(1.08) translateY(-6px) !important;
+}
+.v-card.tv-focused .v-card-poster {
+  border-color: #ff1a40 !important;
+  filter: brightness(1.1);
+}
+
+/* Tarjetas Horizontales (Seguir Viendo / Recientes) */
+.h-card.tv-focused {
+  transform: scale(1.06) translateY(-4px) !important;
+}
+.h-card.tv-focused .h-card-thumb {
+  border: 2px solid #ff1a40 !important;
+  filter: brightness(1.1);
+}
+
+/* Tarjetas de Perfil Netflix */
+.netflix-profile-card.tv-focused {
+  transform: scale(1.12) translateY(-6px) !important;
+}
+.netflix-profile-card.tv-focused .netflix-avatar-wrap {
+  outline: 4px solid #ff1a40 !important;
+  box-shadow: 0 0 30px rgba(255, 26, 64, 0.9) !important;
+}
+
+/* Botones de Barra Lateral */
+.nav-btn.tv-focused {
+  background: rgba(255, 26, 64, 0.28) !important;
+  border-left: 5px solid #ff1a40 !important;
+  color: #ffffff !important;
+  transform: scale(1.08) translateX(6px) !important;
+}
+.nav-btn.tv-focused .nav-icon {
+  color: #ff1a40 !important;
+  transform: scale(1.15);
+}
+
+/* Botones de Episodios */
+.episode-btn.tv-focused {
+  background: #ff1a40 !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  transform: scale(1.1) !important;
+}
+
+/* Píldoras de Categoría y Géneros */
+.cat-pill.tv-focused,
+.genre-palette-btn.tv-focused {
+  transform: scale(1.1) !important;
+  box-shadow: 0 0 20px rgba(255, 26, 64, 0.7) !important;
+}
+
+/* Botones Principales y Hero */
+.hero-btn.tv-focused,
+.btn.tv-focused,
+.explore-load-more-btn.tv-focused {
+  transform: scale(1.08) !important;
+  box-shadow: 0 0 25px rgba(255, 26, 64, 0.9) !important;
+}
+
+/* Inputs en Modo TV */
+input.tv-focused,
+select.tv-focused {
+  background: #262626 !important;
+  border-color: #ff1a40 !important;
+}
+
+/* ── HUD Flotante de Mando Conectado ────────────────────────────────────── */
+.gamepad-hud {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(18, 18, 22, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 26, 64, 0.45);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 26, 64, 0.25);
+  padding: 10px 20px;
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 999999;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(25px);
+  transition: opacity 0.35s cubic-bezier(0.2, 0.9, 0.3, 1), transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.gamepad-hud.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.gamepad-hud-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #25252d;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 0.76rem;
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gamepad-hud-btn {
+  display: inline-block;
+  background: #ff1a40;
+  color: #ffffff;
+  font-weight: 800;
+  border-radius: 50%;
+  width: 19px;
+  height: 19px;
+  line-height: 19px;
+  text-align: center;
+  font-size: 0.72rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}

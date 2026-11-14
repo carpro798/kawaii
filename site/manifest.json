@@ -1,0 +1,31 @@
+{
+  "name": "KuroHoshi",
+  "short_name": "KuroHoshi",
+  "description": "Tu portal de anime KuroHoshi en streaming HD y descargas",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "window-controls-overlay"
+  ],
+  "orientation": "any",
+  "prefer_related_applications": false,
+  "background_color": "#0d0b14",
+  "theme_color": "#0d0b14",
+  "icons": [
+    {
+      "src": "assets/kh_snombre.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/kh_snombre.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+platform=Windows x64
+mpv=0.41.0
+profile=kawaii-shared-playback-remux-v3
+ffmpeg version n9.0.1 Copyright (c) 2000-2026 the FFmpeg developers
+built with gcc 16.2.0 (Rev3, Built by MSYS2 project)
+configuration: --prefix=/c/kawaii-build/mpv-build/build_libs --enable-gpl --disable-debug --disable-doc --enable-static --disable-shared --enable-pic --enable-nonfree --enable-openssl --disable-gpl --disable-nonfree --disable-static --enable-shared --disable-debug --disable-doc --disable-ffplay --disable-avdevice --disable-devices --disable-encoders --disable-muxers --enable-muxer=mov --enable-muxer=mp4 --enable-runtime-cpudetect
+libavutil      61.  1.101 / 61.  1.101
+libavcodec     63.  1.101 / 63.  1.101
+libavformat    63.  1.101 / 63.  1.101
+libavfilter    12.  1.101 / 12.  1.101
+libswscale     10.  1.101 / 10.  1.101
+libswresample   7.  1.101 /  7.  1.101
+
+Exiting with exit code 0

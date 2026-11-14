@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>KuroHoshi — Tu portal de anime</title>
+  <link rel="icon" type="image/png" href="assets/kh_snombre.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d0b14">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="screen-orientation" content="portrait">
+  <meta name="full-screen" content="yes">
+  <meta name="browsermode" content="application">
+  <meta name="x5-fullscreen" content="true">
+  <meta name="x5-page-mode" content="app">
+
+  <!-- Rubik Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="app-body">
+
+  <!-- Falling Sakura Petals Background Canvas -->
+  <canvas id="sakura-canvas"></canvas>
+
+  <!-- ============================================================
+       INTRO SPLASH CINEMÁTICO (Estilo Netflix / KuroHoshi "Ta-Dum")
+       ============================================================ -->
+  <div id="intro-splash" class="intro-splash-screen" onclick="skipIntroSplash()">
+    <div class="intro-splash-content">
+      <div class="intro-cosmic-glow"></div>
+      <div class="intro-logo-wrap">
+        <img src="assets/kh_snombre.png" alt="KuroHoshi" class="intro-logo-img">
+        <div class="intro-light-beam"></div>
+      </div>
+      <div class="intro-brand-title">KUROHOSHI</div>
+      <div class="intro-brand-sub">TU PORTAL DE ANIME</div>
+      <div class="intro-loader-line">
+        <div class="intro-loader-progress"></div>
+      </div>
+      <div class="intro-skip-hint">Toca o haz clic para omitir</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PANTALLA ESTILO NETFLIX: SELECCIÓN DE USUARIO ("¿Quién está viendo?")
+       ============================================================ -->
+  <div id="netflix-screen" class="netflix-overlay">
+    <div class="netflix-content">
+      <div class="netflix-logo">
+        <img src="assets/kh_snombre.png" alt="KuroHoshi" class="netflix-brand-icon">
+        <span class="netflix-brand-text">KuroHoshi</span>
+      </div>
+      <h1 class="netflix-title">¿Quién está viendo?</h1>
+
+      <div id="netflix-profiles-grid" class="netflix-profiles-grid">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="netflix-actions">
+        <button class="btn btn-secondary" onclick="openCreateProfileModal()">➕ Agregar perfil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SIDEBAR LATERAL (Estilo Kawaii Animes Desktop)
+       ============================================================ -->
+  <aside class="app-sidebar">
+    <div class="sidebar-top">
+      <a href="#inicio" class="sidebar-logo" title="KuroHoshi">
+        <img src="assets/kh_snombre.png" alt="KuroHoshi" class="sidebar-logo-img">
+      </a>
+      <span class="sidebar-logo-sub">KuroHoshi</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#inicio" class="sidebar-item active" data-view="inicio" title="Inicio">
+        <span class="sidebar-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Inicio</span>
+      </a>
+      <a href="#buscar" class="sidebar-item" data-view="buscar" title="Buscar">
+        <span class="sidebar-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Buscar</span>
+      </a>
+      <a href="#explorar" class="sidebar-item" data-view="explorar" title="Explorar">
+        <span class="sidebar-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Explorar</span>
+      </a>
+      <a href="#calendario" class="sidebar-item" data-view="calendario" title="Calendario">
+        <span class="sidebar-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Calendario</span>
+      </a>
+      <a href="#generos" class="sidebar-item" data-view="generos" title="Géneros">
+        <span class="sidebar-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" />
+            <line x1="3" y1="12" x2="3.01" y2="12" />
+            <line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Géneros</span>
+      </a>
+      <a href="#perfil" class="sidebar-item" data-view="perfil" title="Perfil">
+        <div class="sidebar-avatar-wrap">
+          <img id="sidebar-user-avatar" src="assets/splash_robot.webp" alt="Avatar" class="sidebar-avatar-img">
+        </div>
+        <span class="sidebar-label">Perfil</span>
+      </a>
+      <a href="#ajustes" class="sidebar-item" data-view="ajustes" title="Ajustes">
+        <span class="sidebar-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Ajustes</span>
+      </a>
+      <a href="#descargas" class="sidebar-item" data-view="descargas" title="Descargas">
+        <span class="sidebar-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Descargas</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ============================================================
+       CONTENIDO PRINCIPAL
+       ============================================================ -->
+  <main class="app-main-content">
+
+    <!-- ==========================================
+         VIEW: INICIO (HOME)
+         ========================================== -->
+    <section id="view-inicio" class="view-section active">
+      <!-- Top Red Banner -->
+      <div class="kawaii-top-banner kurohoshi-top-banner" onclick="refreshCatalogBanner()">
+        <span class="top-banner-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10" />
+            <polyline points="1 20 1 14 7 14" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+        </span>
+        <span class="top-banner-text">Actualizar catálogo y cuenta</span>
+      </div>
+
+      <!-- Hero Carousel -->
+      <div id="hero-slider" class="hero-slider"></div>
+
+      <!-- Seguir Viendo (Horizontal 16:9 con barra roja y botón cerrar) -->
+      <div class="carousel-container" id="section-keep-watching">
+        <div class="section-header">
+          <h2 class="section-title">Seguir Viendo</h2>
+          <a href="#perfil" class="section-link">Ver todo →</a>
+        </div>
+        <div id="keep-watching-track" class="carousel-track horizontal-track"></div>
+      </div>
+
+      <!-- Episodios Recientes (16:9 con badge Ep.X) -->
+      <div class="carousel-container">
+        <div class="section-header">
+          <h2 class="section-title">Episodios Recientes</h2>
+          <a href="#explorar" class="section-link">Ver más →</a>
+        </div>
+        <div id="recent-episodes-track" class="carousel-track horizontal-track"></div>
+      </div>
+
+      <!-- Porque viste... (Vertical posters) -->
+      <div class="carousel-container" id="section-recommendation">
+        <div class="section-header">
+          <h2 class="section-title" id="recommendation-title">Porque viste Jujutsu Kaisen</h2>
+          <a href="#explorar" class="section-link">Explorar →</a>
+        </div>
+        <div id="recommended-track" class="carousel-track poster-track"></div>
+      </div>
+
+      <!-- Animes Latinos (Vertical posters con badge TV X Cap) -->
+      <div class="carousel-container">
+        <div class="section-header">
+          <h2 class="section-title">Animes Latinos</h2>
+          <a href="#explorar" class="section-link" onclick="setExploreFilter('latinos')">Ver todos &gt;</a>
+        </div>
+        <div id="latinos-track" class="carousel-track poster-track"></div>
+      </div>
+
+      <!-- Populares de la Temporada -->
+      <div class="carousel-container">
+        <div class="section-header">
+          <h2 class="section-title">Populares</h2>
+          <a href="#explorar" class="section-link">Ver ranking →</a>
+        </div>
+        <div id="popular-track" class="carousel-track poster-track"></div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW: BUSCAR (SEARCH)
+         ========================================== -->
+    <section id="view-buscar" class="view-section">
+      <div class="search-page-header">
+        <div class="search-bar-wrap">
+          <span class="search-icon-inside">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </span>
+          <input type="text" id="view-search-input" class="search-input-large" placeholder="Buscar anime..."
+            oninput="handleSearchInput(this.value)">
+          <button class="search-filter-icon" onclick="window.location.hash='#explorar'"
+            title="Filtros avanzados">☰</button>
+        </div>
+      </div>
+
+      <div class="search-results-section">
+        <h2 class="section-title" id="search-results-title" style="margin-bottom: 1.25rem;">Populares</h2>
+        <div id="search-grid" class="catalog-grid"></div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW: EXPLORAR (CATALOG)
+         ========================================== -->
+    <section id="view-explorar" class="view-section">
+      <!-- Top Category Chips -->
+      <div class="category-chips-bar">
+        <button class="cat-pill" onclick="setExploreFilter('emision', this)" data-filter="emision">En Emisión</button>
+        <button class="cat-pill active" onclick="setExploreFilter('animes', this)" data-filter="animes">Animes</button>
+        <button class="cat-pill" onclick="setExploreFilter('peliculas', this)"
+          data-filter="peliculas">Películas</button>
+        <button class="cat-pill" onclick="setExploreFilter('latinos', this)" data-filter="latinos">Latinos</button>
+        <button class="cat-pill" onclick="setExploreFilter('castellano', this)"
+          data-filter="castellano">Castellano</button>
+        <button class="cat-pill" onclick="setExploreFilter('mas_vistos', this)" data-filter="mas_vistos">Más
+          Vistos</button>
+        <button class="cat-pill" onclick="setExploreFilter('populares', this)"
+          data-filter="populares">Populares</button>
+      </div>
+
+      <!-- Search in catalog -->
+      <div class="catalog-subsearch">
+        <input type="text" id="explore-search-input" placeholder="Buscar anime en el catálogo..."
+          oninput="handleExploreSearch(this.value)">
+      </div>
+
+      <!-- Grid -->
+      <div id="explore-grid" class="catalog-grid"></div>
+    </section>
+
+    <!-- ==========================================
+         VIEW: CALENDARIO
+         ========================================== -->
+    <section id="view-calendario" class="view-section">
+      <div class="section-header" style="margin-bottom: 1.5rem;">
+        <h1 class="section-title">Calendario de Emisión Semanal</h1>
+      </div>
+
+      <div class="calendar-days">
+        <div class="day-tab active" onclick="setCalendarDay(0, this)">
+          <div class="day-name">Lunes</div>
+        </div>
+        <div class="day-tab" onclick="setCalendarDay(1, this)">
+          <div class="day-name">Martes</div>
+        </div>
+        <div class="day-tab" onclick="setCalendarDay(2, this)">
+          <div class="day-name">Miércoles</div>
+        </div>
+        <div class="day-tab" onclick="setCalendarDay(3, this)">
+          <div class="day-name">Jueves</div>
+        </div>
+        <div class="day-tab" onclick="setCalendarDay(4, this)">
+          <div class="day-name">Viernes</div>
+        </div>
+        <div class="day-tab" onclick="setCalendarDay(5, this)">
+          <div class="day-name">Sábado</div>
+        </div>
+        <div class="day-tab" onclick="setCalendarDay(6, this)">
+          <div class="day-name">Domingo</div>
+        </div>
+      </div>
+
+      <div id="calendar-grid" class="catalog-grid"></div>
+    </section>
+
+    <!-- ==========================================
+         VIEW: GÉNEROS (40 Botones con colores exactos)
+         ========================================== -->
+    <section id="view-generos" class="view-section">
+      <div class="section-header" style="margin-bottom: 1.5rem;">
+        <h1 class="section-title">Géneros</h1>
+      </div>
+      <div id="genres-palette-grid" class="genres-palette-grid">
+        <!-- Rendered dynamically with exact screenshot colors -->
+      </div>
+
+      <div id="genre-filtered-section" style="margin-top: 2.5rem; display: none;">
+        <h2 class="section-title" id="genre-filter-heading" style="margin-bottom: 1.25rem;">Animes de Acción</h2>
+        <div id="genre-animes-grid" class="catalog-grid"></div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW: PERFIL (Estilo exacto de la App Original)
+         ========================================== -->
+    <section id="view-perfil" class="view-section">
+      <!-- Profile Header Box -->
+      <div class="profile-card-original">
+        <div class="profile-card-left">
+          <div class="profile-avatar-container">
+            <img id="profile-main-avatar" src="assets/splash_robot.webp" alt="Avatar" class="profile-main-avatar-img">
+            <img id="profile-main-frame" src="assets/profile_frame_basic_sakura.webp" alt="Marco"
+              class="profile-main-frame-img">
+          </div>
+          <div class="profile-sub-badges">
+            <span class="badge-role">👤 Usuario Gratis</span>
+            <button class="btn-text-badge" onclick="openAppearanceModal()">🎨 Personalizar apariencia</button>
+          </div>
+        </div>
+
+        <div class="profile-card-center">
+          <h1 id="profile-username" class="profile-username-text">Carpro798</h1>
+          <div class="profile-account-type">
+            Cuenta gratuita · <span id="profile-unique-animes">0 animes únicos en tus listas</span>
+          </div>
+        </div>
+
+        <div class="profile-card-right">
+          <button class="btn btn-primary-blue" onclick="openEditProfileModal()">✏️ Editar perfil</button>
+          <button class="btn btn-dark-subtle" onclick="window.location.hash='#ajustes'">⚙️ Ajustes</button>
+          <button class="btn btn-dark-maroon" onclick="window.location.hash='#descargas'">☁️ Descargas</button>
+          <button class="btn btn-dark-maroon" onclick="logoutToNetflixScreen()">🚪 Cerrar sesión</button>
+          <div class="points-badge-gold" id="profile-points-badge">⭐ 0 KuroHoshi Points</div>
+        </div>
+      </div>
+
+      <!-- Tu biblioteca Section -->
+      <div class="library-section">
+        <h2 class="section-title" style="margin-bottom: 1.25rem;">Tu biblioteca</h2>
+
+        <div class="library-grid-4">
+          <!-- Favoritos Card -->
+          <div class="library-stat-card card-favoritos" onclick="filterProfileView('favorites')">
+            <div class="stat-card-info">
+              <span class="stat-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"
+                  stroke="none">
+                  <path
+                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </span>
+              <span class="stat-card-count" id="count-favorites">0</span>
+              <span class="stat-card-name">Favoritos</span>
+            </div>
+            <img src="assets/profile_favorites_mascot.webp" alt="Favoritos" class="stat-card-mascot">
+          </div>
+
+          <!-- Viendo Card -->
+          <div class="library-stat-card card-viendo" onclick="filterProfileView('watching')">
+            <div class="stat-card-info">
+              <span class="stat-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"
+                  stroke="none">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+              </span>
+              <span class="stat-card-count" id="count-watching">0</span>
+              <span class="stat-card-name">Viendo</span>
+            </div>
+            <img src="assets/profile_watching_mascot.webp" alt="Viendo" class="stat-card-mascot">
+          </div>
+
+          <!-- Terminados Card -->
+          <div class="library-stat-card card-terminados" onclick="filterProfileView('completed')">
+            <div class="stat-card-info">
+              <span class="stat-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </span>
+              <span class="stat-card-count" id="count-completed">0</span>
+              <span class="stat-card-name">Terminados</span>
+            </div>
+            <img src="assets/profile_completed_mascot.webp" alt="Terminados" class="stat-card-mascot">
+          </div>
+
+          <!-- Ver después Card -->
+          <div class="library-stat-card card-despues" onclick="filterProfileView('watchLater')">
+            <div class="stat-card-info">
+              <span class="stat-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </span>
+              <span class="stat-card-count" id="count-watchLater">0</span>
+              <span class="stat-card-name">Ver después</span>
+            </div>
+            <img src="assets/profile_watch_later_mascot.webp" alt="Ver después" class="stat-card-mascot">
+          </div>
+        </div>
+
+        <!-- Red Duration & Total Bar -->
+        <div class="library-summary-bar">
+          <div class="summary-item">
+            <span class="summary-number" id="summary-total-animes">0</span>
+            <span class="summary-label">Total Animes</span>
+          </div>
+          <div class="summary-separator"></div>
+          <div class="summary-item">
+            <span class="summary-number" id="summary-duration">~0 h 0 min</span>
+            <span class="summary-label">Duración aprox.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Lists Content -->
+      <div class="profile-library-lists" id="profile-library-lists">
+        <!-- Favoritos Carousel -->
+        <div class="carousel-container" id="profile-favs-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"
+                stroke="none" style="vertical-align:middle;margin-right:6px;">
+                <path
+                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>Favoritos
+            </h2>
+            <span class="badge badge-primary" id="profile-favs-badge">Ver todos (0)</span>
+          </div>
+          <div id="profile-favs-track" class="carousel-track poster-track"></div>
+        </div>
+
+        <!-- Terminados Carousel -->
+        <div class="carousel-container" id="profile-completed-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                style="vertical-align:middle;margin-right:6px;">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>Terminados
+            </h2>
+            <span class="badge badge-primary" id="profile-completed-badge">Ver todos (0)</span>
+          </div>
+          <div id="profile-completed-track" class="carousel-track poster-track"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW: AJUSTES (CONFIGURACIÓN)
+         ========================================== -->
+    <section id="view-ajustes" class="view-section">
+      <div class="settings-header">
+        <button class="settings-back-btn" onclick="window.history.back()">←</button>
+        <h1 class="settings-title">Configuración</h1>
+      </div>
+
+      <div class="settings-content">
+        <!-- Reproductor -->
+        <div class="settings-group">
+          <div class="settings-group-title">
+            <span style="color: var(--primary);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
+                stroke="none" style="vertical-align:middle;">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+            </span> Reproductor
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-item-info">
+              <div class="setting-item-title">Reproducir siguiente automáticamente</div>
+              <div class="setting-item-desc">Reproduce el siguiente episodio cuando termina el actual</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-auto-next" checked onchange="saveAppSetting('autoNext', this.checked)">
+              <span class="slider round"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-item-info">
+              <div class="setting-item-title">Mostrar cuenta regresiva</div>
+              <div class="setting-item-desc">Muestra la cuenta regresiva antes de reproducir el siguiente episodio</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-countdown" checked
+                onchange="saveAppSetting('countdown', this.checked)">
+              <span class="slider round"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-item-info">
+              <div class="setting-item-title">Duración de cuenta regresiva</div>
+              <div class="setting-item-desc">10 segundos</div>
+            </div>
+            <span style="color: var(--text-muted); font-size: 0.9rem;">10s ▾</span>
+          </div>
+        </div>
+
+        <!-- Preferencias -->
+        <div class="settings-group">
+          <div class="settings-group-title">
+            <span style="color: var(--primary);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                style="vertical-align:middle;">
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </span> Preferencias
+          </div>
+          <div class="setting-item">
+            <div class="setting-item-info">
+              <div class="setting-item-title">Servidor preferido</div>
+              <div class="setting-item-desc">Sin preferencia (automático)</div>
+            </div>
+            <span style="color: var(--text-muted); font-size: 0.9rem;">Auto ▾</span>
+          </div>
+        </div>
+
+        <!-- Red -->
+        <div class="settings-group">
+          <div class="settings-group-title">
+            <span style="color: var(--primary);">📶</span> Red
+          </div>
+          <div class="setting-item">
+            <div class="setting-item-info">
+              <div class="setting-item-title">DNS-over-HTTPS (DoH)</div>
+              <div class="setting-item-desc">Evita bloqueos de tu proveedor de internet. Actívalo si algunos servidores
+                no funcionan.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-doh" onchange="saveAppSetting('doh', this.checked)">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div class="setting-item-info">
+              <div class="setting-item-title">IP Servidor KuroHoshi (Móvil / APK)</div>
+              <div class="setting-item-desc">Si usas la app en el teléfono, coloca la IP de tu PC para descargar y
+                reproducir por Wi-Fi (ej: http://192.168.1.15:3000)</div>
+            </div>
+            <div style="display:flex; gap:0.4rem; align-items:center;">
+              <input type="text" id="setting-server-ip" placeholder="http://192.168.X.X:3000"
+                style="background:#14141c; border:1px solid var(--border-light); color:#fff; padding:0.4rem 0.6rem; border-radius:4px; font-size:0.8rem; width:190px;"
+                onchange="saveServerIp(this.value)">
+              <button class="btn btn-secondary" style="font-size:0.75rem; padding:0.4rem 0.7rem;"
+                onclick="saveServerIp(document.getElementById('setting-server-ip').value)">Guardar</button>
+            </div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-item-info">
+              <div class="setting-item-title">Proveedor DNS</div>
+              <div class="setting-item-desc">Cloudflare</div>
+            </div>
+            <span style="color: var(--text-muted); font-size: 0.9rem;">Cloudflare ▾</span>
+          </div>
+        </div>
+
+        <!-- Caché y almacenamiento -->
+        <div class="settings-group">
+          <div class="settings-group-title">
+            <span style="color: var(--primary);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                style="vertical-align:middle;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </span> Caché y almacenamiento
+          </div>
+          <div class="setting-item">
+            <div class="setting-item-info">
+              <div class="setting-item-title">Límite total de caché</div>
+              <div class="setting-item-desc">300 MB compartidos entre video (80 %) e imágenes (20 %).</div>
+            </div>
+            <span style="color: var(--text-muted); font-size: 0.9rem;">300 MB ▾</span>
+          </div>
+
+          <div class="setting-item clickable" onclick="clearEpCache()">
+            <div class="setting-item-info">
+              <div class="setting-item-title">Limpiar caché de episodios</div>
+              <div class="setting-item-desc" id="cache-ep-desc">0 KB usados / 240 MB</div>
+            </div>
+            <button class="btn btn-secondary" style="font-size: 0.75rem;">Limpiar</button>
+          </div>
+
+          <div class="setting-item clickable" onclick="clearImgCache()">
+            <div class="setting-item-info">
+              <div class="setting-item-title">Limpiar caché de imágenes</div>
+              <div class="setting-item-desc" id="cache-img-desc">13 MB usados / 60 MB</div>
+            </div>
+            <button class="btn btn-secondary" style="font-size: 0.75rem;">Limpiar</button>
+          </div>
+
+          <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 1rem; line-height: 1.5;">
+            <strong>Caché total usada:</strong> <span id="total-cache-desc">13 MB de 300 MB</span><br>
+            No incluye la instalación, el catálogo ni las descargas. No borra tu cuenta ni historial.
+          </div>
+
+          <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 1.5rem;">
+            Versión 1.0.3 (4) · KuroHoshi Web App
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW: DESCARGAS
+         ========================================== -->
+    <section id="view-descargas" class="view-section">
+      <div class="section-header" style="margin-bottom: 1.5rem;">
+        <div class="section-title-wrap">
+          <span class="section-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </span>
+          <h1 class="section-title">Mis Descargas</h1>
+        </div>
+        <div style="display:flex; gap:0.75rem; align-items:center;">
+          <span id="dl-storage-info" style="font-size:0.82rem; color:var(--text-muted);"></span>
+          <button class="btn btn-secondary" onclick="refreshDownloads()"
+            style="font-size:0.82rem; display:inline-flex; align-items:center; gap:0.4rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+            Actualizar</button>
+        </div>
+      </div>
+
+      <div class="dl-info-banner">
+        <div>
+          <strong>🎞️ Descargas H.264 HD Compatibles</strong> — Guardadas en tu equipo para reproducir offline en alta
+          definición con imagen y sonido fluidos.
+        </div>
+        <div style="margin-top:0.4rem; color:var(--text-dim); font-size:0.82rem;">
+          💡 Los episodios descargados se pueden reproducir 100% offline sin anuncios.
+        </div>
+      </div>
+
+      <!-- Sección de descargas activas en progreso -->
+      <div id="downloads-active-wrap" style="margin-bottom: 1.5rem;"></div>
+
+      <!-- Cuadrícula estilo catálogo con portadas -->
+      <div id="downloads-grid" class="catalog-grid"></div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================
+       BOTÓN FLOTANTE: + REDES SOCIALES (Esquina inferior derecha)
+       ============================================================ -->
+  <button class="floating-social-btn" onclick="openSocialModal()" title="Redes Sociales">
+    <span class="social-btn-plus">+</span> Redes Sociales
+  </button>
+
+  <!-- ============================================================
+       MODAL: REDES SOCIALES
+       ============================================================ -->
+  <div id="social-modal" class="modal-backdrop" onclick="if(event.target === this) closeModal('social-modal')">
+    <div class="modal-content social-modal-content">
+      <button class="modal-close-btn" onclick="closeModal('social-modal')">✕</button>
+      <h2 style="margin-bottom: 1.25rem;">⭐ Comunidad KuroHoshi</h2>
+      <div class="social-links-grid">
+        <div class="social-card-item" onclick="showComingSoon(this)">
+          <span class="social-card-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+            </svg>
+          </span>
+          <div class="social-card-text">
+            <strong>Discord Oficial</strong>
+            <span class="social-coming-soon">🕐 Próximamente</span>
+          </div>
+        </div>
+        <div class="social-card-item" onclick="showComingSoon(this)">
+          <span class="social-card-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.75a8.26 8.26 0 0 0 4.83 1.55V6.86a4.85 4.85 0 0 1-1.06-.17z" />
+            </svg>
+          </span>
+          <div class="social-card-text">
+            <strong>TikTok KuroHoshi</strong>
+            <span class="social-coming-soon">🕐 Próximamente</span>
+          </div>
+        </div>
+        <div class="social-card-item" onclick="showComingSoon(this)">
+          <span class="social-card-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+            </svg>
+          </span>
+          <div class="social-card-text">
+            <strong>Canal de YouTube</strong>
+            <span class="social-coming-soon">🕐 Próximamente</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: CREAR PERFIL (ESTILO NETFLIX)
+       ============================================================ -->
+  <div id="create-profile-modal" class="modal-backdrop"
+    onclick="if(event.target === this) closeModal('create-profile-modal')">
+    <div class="modal-content create-profile-modal-content">
+      <button class="modal-close-btn" onclick="closeModal('create-profile-modal')">✕</button>
+      <h2 style="margin-bottom: 1rem;">➕ Crear nuevo perfil</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Crea un perfil para ti o para tus amigos. Cada perfil tiene su propio historial, favoritos y puntos KuroHoshi
+        separados.
+      </p>
+
+      <div class="form-group">
+        <label for="new-profile-name" class="form-label">Nombre del perfil:</label>
+        <input type="text" id="new-profile-name" class="form-input" placeholder="Ej: Carpro798, Juan, Sakura..."
+          maxlength="25">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Foto de perfil (Sube la tuya o elige un avatar):</label>
+        <div class="avatar-preview-row">
+          <img id="new-profile-preview" src="assets/splash_robot.webp" alt="Preview" class="avatar-preview-img">
+          <div>
+            <label class="btn btn-secondary upload-btn-label">
+              📁 Subir imagen propia
+              <input type="file" id="new-profile-file-input" accept="image/*" style="display:none;"
+                onchange="handleProfileImageUpload(event, 'new-profile-preview')">
+            </label>
+            <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 4px;">PNG, JPG, WEBP o GIF</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">O elige un avatar KuroHoshi:</div>
+        <div class="preset-avatars-row" id="preset-avatars-new"></div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button class="btn btn-secondary" onclick="closeModal('create-profile-modal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmCreateProfile()">Crear Perfil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: EDITAR PERFIL (CAMBIAR NOMBRE Y FOTO)
+       ============================================================ -->
+  <div id="edit-profile-modal" class="modal-backdrop"
+    onclick="if(event.target === this) closeModal('edit-profile-modal')">
+    <div class="modal-content create-profile-modal-content">
+      <button class="modal-close-btn" onclick="closeModal('edit-profile-modal')">✕</button>
+      <h2 style="margin-bottom: 1rem;">✏️ Editar Perfil</h2>
+
+      <div class="form-group">
+        <label for="edit-profile-name" class="form-label">Nombre de usuario:</label>
+        <input type="text" id="edit-profile-name" class="form-input" maxlength="25">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Foto de perfil:</label>
+        <div class="avatar-preview-row">
+          <img id="edit-profile-preview" src="assets/splash_robot.webp" alt="Preview" class="avatar-preview-img">
+          <div>
+            <label class="btn btn-secondary upload-btn-label">
+              📁 Subir nueva imagen
+              <input type="file" id="edit-profile-file-input" accept="image/*" style="display:none;"
+                onchange="handleProfileImageUpload(event, 'edit-profile-preview')">
+            </label>
+            <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 4px;">Puedes elegir cualquier foto de tu
+              PC o móvil</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">O elegir avatar KuroHoshi:</div>
+        <div class="preset-avatars-row" id="preset-avatars-edit"></div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button class="btn btn-secondary" onclick="closeModal('edit-profile-modal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmEditProfile()">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: PERSONALIZAR APARIENCIA (MARCOS ILUSTRADOS)
+       ============================================================ -->
+  <div id="appearance-modal" class="modal-backdrop" onclick="if(event.target === this) closeModal('appearance-modal')">
+    <div class="modal-content">
+      <button class="modal-close-btn" onclick="closeModal('appearance-modal')">✕</button>
+      <h2 style="margin-bottom: 0.5rem;">🎨 Personalizar Apariencia</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Elige tu marco ilustrado favorito desbloqueado para tu avatar.
+      </p>
+
+      <div class="frames-carousel" id="frames-carousel"></div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+        <button class="btn btn-primary" onclick="closeModal('appearance-modal')">Listo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: DETALLE DEL ANIME
+       ============================================================ -->
+  <div id="detail-modal" class="modal-backdrop" onclick="if(event.target === this) closeModal('detail-modal')">
+    <div class="modal-content">
+      <button class="modal-close-btn" onclick="closeModal('detail-modal')">✕</button>
+      <div id="detail-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: ANIME DESCARGADO (SOLO CAPÍTULOS INSTALADOS)
+       ============================================================ -->
+  <div id="downloaded-modal" class="modal-backdrop" onclick="if(event.target === this) closeModal('downloaded-modal')">
+    <div class="modal-content">
+      <button class="modal-close-btn" onclick="closeModal('downloaded-modal')">✕</button>
+      <div id="downloaded-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: REPRODUCTOR DE VIDEO
+       ============================================================ -->
+  <div id="player-modal" class="modal-backdrop" onclick="if(event.target === this) closeModal('player-modal')">
+    <div class="modal-content player-modal-content">
+      <button class="modal-close-btn" onclick="closeModal('player-modal')">✕</button>
+
+      <div class="player-video-container" id="player-media-wrap"></div>
+
+      <div class="player-controls-bar">
+        <div class="player-title-info">
+          <div id="player-anime-name" class="player-anime-name">Cargando anime...</div>
+          <div id="player-ep-name" class="player-ep-name">Episodio 1</div>
+        </div>
+
+        <div class="player-actions-row">
+          <button class="btn btn-secondary" onclick="downloadCurrentEpisode()"
+            title="Descargar este capítulo en formato MP4">
+            📥 Descargar MP4
+          </button>
+          <button class="btn btn-secondary" onclick="playerSkipIntro()">
+            ⏭️ Saltar Intro (+85s)
+          </button>
+          <button class="btn btn-secondary" onclick="playerPrevEp()">
+            ◀ Anterior
+          </button>
+          <button class="btn btn-primary" onclick="playerNextEp()">
+            Siguiente ▶
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 0.6rem;">
+          <select id="player-server-select" class="filter-select" style="font-size: 0.8rem;"
+            onchange="changePlayerServer(this.value)">
+            <option value="delta">⚡ Servidor Delta</option>
+            <option value="epsilon">🎬 Servidor Epsilon</option>
+            <option value="gamma">📡 Servidor Gamma</option>
+          </select>
+          <select id="player-lang-select" class="filter-select" style="font-size: 0.8rem;"
+            onchange="changePlayerLanguage(this.value)">
+            <option value="sub">Japonés (Sub)</option>
+            <option value="lat">Español Latino</option>
+            <option value="cas">Castellano</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: REPRODUCTOR LOCAL (DESCARGAS)
+       ============================================================ -->
+  <div id="local-player-modal" class="modal-backdrop" onclick="if(event.target === this) closeLocalPlayer()">
+    <div class="modal-content player-modal-content">
+      <button class="modal-close-btn" onclick="closeLocalPlayer()">✕</button>
+      <div class="player-video-container">
+        <video id="local-video-player" class="player-video" controls autoplay>
+          Tu navegador no soporta video HTML5.
+        </video>
+      </div>
+      <div class="player-controls-bar">
+        <div class="player-title-info">
+          <div id="local-player-title" class="player-anime-name">—</div>
+          <div class="player-ep-name" style="color:var(--accent-green);">💾 Reproducción local offline (H.265)</div>
+        </div>
+        <div class="player-actions-row">
+          <button class="btn btn-secondary" onclick="closeLocalPlayer()">✕ Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embedded database, HLS Player Engine and Application Scripts -->
+  <script src="hls.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script src="gamepad.js"></script>
+
+  <!-- Kawaii AdBlock Stealth Shield & Anti-Popup Interceptor -->
+  <script>
+    (function () {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(function () { });
+      }
+
+      // 1. Engaño sigiloso a detectores de AdBlock en el documento principal
+      window.canRunAds = true;
+      window.isAdBlockActive = false;
+      window.__adbDetected = false;
+      window.adblock = false;
+      window.adBlockDetected = false;
+
+      // 2. Interceptar popups y ventanas emergentes simulando éxito total
+      const _origOpen = window.open;
+      window.open = function (url, target, features) {
+        if (url && (url.includes('tmdb.org') || url.includes('malcdn.net') || String(url).startsWith('blob:'))) {
+          return _origOpen.apply(this, arguments);
+        }
+        console.warn('[Kawaii Stealth] Popup publicitario bloqueado sigilosamente:', url);
+        // Retornamos un objeto Window proxy falso que parece 100% activo y vivo
+        return {
+          closed: false,
+          name: target || '_blank',
+          focus: function () { },
+          blur: function () { },
+          close: function () { this.closed = true; },
+          location: { href: '', replace: function () { }, reload: function () { } },
+          document: { write: function () { }, close: function () { }, open: function () { } }
+        };
+      };
+
+      // 3. Prevenir que redirecciones externas secuestren la pestaña de la app
+      let _userNavigating = false;
+      document.addEventListener('click', function (e) {
+        const link = e.target && e.target.closest ? e.target.closest('a') : null;
+        if (link && !link.closest('#player-media-wrap')) {
+          _userNavigating = true;
+        }
+      }, true);
+
+      window.addEventListener('beforeunload', function (e) {
+        if (!_userNavigating) {
+          e.preventDefault();
+          return (e.returnValue = '');
+        }
+        _userNavigating = false;
+      });
+
+      // 4. Devolver foco inmediatamente si un anuncio intenta desenfocar la pantalla
+      window.addEventListener('blur', function () {
+        setTimeout(function () {
+          try { window.focus(); } catch (e) { }
+        }, 80);
+      });
+    })();
+  </script>
+</body>
+
+</html>

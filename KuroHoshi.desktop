@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=KuroHoshi
+Comment=Tu portal y aplicación de anime sin anuncios
+Exec=/bin/bash -c "cd '/home/carlos/Imágenes/kawaii-main' && ./iniciar_app.sh"
+Icon=/home/carlos/Imágenes/kawaii-main/site/assets/kh_snombre.png
+Terminal=false
+Categories=AudioVideo;Video;Player;
+StartupWMClass=kurohoshi
