@@ -9,8 +9,4 @@ site/descargas/*.mp4
 site/descargas/*.ts
 site/descargas/*.m3u8
 
-# Binarios locales de la app de escritorio
-runtime/
-app/
-*.exe
 *.log
