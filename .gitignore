@@ -1,4 +1,4 @@
-# Perfiles temporales de navegador y caché
+# Perfiles temporales de navegador y cache
 .app_profile/
 __pycache__/
 *.pyc
@@ -9,8 +9,8 @@ site/descargas/*.mp4
 site/descargas/*.ts
 site/descargas/*.m3u8
 
-# Binarios locales de la app de escritorio (si solo se sube la web a GitHub)
+# Binarios locales de la app de escritorio
 runtime/
+app/
 *.exe
 *.log
-
