@@ -13,7 +13,14 @@ import threading
 import subprocess
 import webbrowser
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, "frozen", False):
+    BUNDLE_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    EXE_DIR = os.path.dirname(sys.executable)
+else:
+    BUNDLE_DIR = os.path.dirname(os.path.abspath(__file__))
+    EXE_DIR = BUNDLE_DIR
+
+BASE_DIR = BUNDLE_DIR
 sys.path.insert(0, BASE_DIR)
 
 import server
@@ -82,7 +89,7 @@ def main():
 
     app_url = f"http://localhost:{server.PORT}"
     browser_exe = find_browser()
-    profile_dir = os.path.join(BASE_DIR, ".app_profile")
+    profile_dir = os.path.join(EXE_DIR, ".app_profile")
     os.makedirs(profile_dir, exist_ok=True)
 
     if browser_exe:

@@ -18,9 +18,16 @@ import urllib.parse
 import webbrowser
 
 PORT = 3000
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SITE_DIR = os.path.join(BASE_DIR, "site")
-DOWNLOADS_DIR = os.path.join(SITE_DIR, "descargas")
+if getattr(sys, "frozen", False):
+    BUNDLE_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    EXE_DIR = os.path.dirname(sys.executable)
+else:
+    BUNDLE_DIR = os.path.dirname(os.path.abspath(__file__))
+    EXE_DIR = BUNDLE_DIR
+
+BASE_DIR = BUNDLE_DIR
+SITE_DIR = os.path.join(BUNDLE_DIR, "site")
+DOWNLOADS_DIR = os.path.join(EXE_DIR, "descargas")
 DOWNLOADS_INDEX = os.path.join(DOWNLOADS_DIR, "index.json")
 ACTIVE_DOWNLOADS = {}   # key: "{animeId}_{ep}" → { status, progress }
 
@@ -56,9 +63,12 @@ def save_index(entries):
 
 def get_ffmpeg():
     # 1. En Windows, usar el ejecutable empaquetado si existe
-    local_win = os.path.join(BASE_DIR, "app", "resources", "ffmpeg.exe")
+    local_win = os.path.join(BUNDLE_DIR, "app", "resources", "ffmpeg.exe")
     if sys.platform.startswith("win") and os.path.exists(local_win):
         return local_win
+    local_exe_dir = os.path.join(EXE_DIR, "ffmpeg.exe")
+    if sys.platform.startswith("win") and os.path.exists(local_exe_dir):
+        return local_exe_dir
     # 2. Sistema PATH (Linux o Windows)
     p = shutil.which("ffmpeg")
     if p:

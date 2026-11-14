@@ -10,3 +10,10 @@ site/descargas/*.ts
 site/descargas/*.m3u8
 
 *.log
+
+# Archivos de empaquetado portable local
+build/
+dist/
+Kawaii_Animes_Portable/
+*.spec
+app_icon.ico
