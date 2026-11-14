@@ -7,19 +7,18 @@ echo    SINCRONIZANDO CAMBIOS CON GITHUB
 echo ======================================================
 echo.
 
-if not exist ".git" (
-    echo [1/3] Inicializando repositorio Git local...
-    git init
-    git branch -M main
+git remote get-url origin >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [1/3] Conectando con tu repositorio de GitHub...
     echo.
-    echo Por favor escribe o pega la URL de tu repositorio de GitHub
+    echo Por favor pega la URL de tu repositorio:
     echo Ejemplo: https://github.com/carpro798/kawaii.git
-    set /p REPO_URL="Pega tu URL aqui: "
+    set /p REPO_URL="Pega la URL aqui: "
     git remote add origin %REPO_URL%
 )
 
 echo.
-echo [2/3] Preparando archivos y cambios...
+echo [2/3] Guardando archivos y cambios...
 git add .
 git commit -m "Actualizacion automatica: mejoras del reproductor"
 
