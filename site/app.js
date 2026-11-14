@@ -1483,7 +1483,7 @@ async function loadStealthEmbed(wrap, anime, epNumber, srcUrl) {
           break;
         }
       }
-    } catch(e) {}
+    } catch (e) { }
   }
 
   if (injectedHtml) {
