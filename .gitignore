@@ -17,3 +17,13 @@ dist/
 Kawaii_Animes_Portable/
 *.spec
 app_icon.ico
+
+# Archivos temporales de análisis y descompilado
+scratch/
+*.class
+*.jar.bak
+
+# Portables locales
+kr_portable/
+kr_portable.zip
+*.zip
