@@ -1357,11 +1357,170 @@ function renderPlayerMedia(anime, epNumber) {
     });
 }
 
+// ── Desencriptador Nativo VOE (JSON rot13+b64 payload) ──
+function extractVoePayloadM3u8(html) {
+  if (!html) return null;
+  const m = html.match(/<script\s+type=["']application\/json["']\s*>\s*\["([^"]+)"\]\s*<\/script>/);
+  if (!m) return null;
+  try {
+    const raw = m[1];
+    let s1 = '';
+    for (let i = 0; i < raw.length; i++) {
+      let c = raw.charCodeAt(i);
+      if (c >= 65 && c <= 90) c = (c - 65 + 13) % 26 + 65;
+      else if (c >= 97 && c <= 122) c = (c - 97 + 13) % 26 + 97;
+      s1 += String.fromCharCode(c);
+    }
+    const markers = ['@$', '^^', '~@', '%?', '*~', '!!', '#&'];
+    let s2 = s1;
+    for (const marker of markers) { s2 = s2.split(marker).join('_'); }
+    const s3 = s2.split('_').join('');
+    const s4 = atob(s3);
+    let s5 = '';
+    for (let i = 0; i < s4.length; i++) { s5 += String.fromCharCode(s4.charCodeAt(i) - 3); }
+    const s6 = s5.split('').reverse().join('');
+    const s7 = decodeURIComponent(escape(atob(s6)));
+    const data = JSON.parse(s7);
+    return data.source || data.direct_access_url || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// ── Desencriptador Nativo Byse / Streamwish / Delta (AES-256-GCM) ──
+async function extractByseNativeM3u8(embedUrl, getProxy) {
+  try {
+    const parts = embedUrl.replace(/\/+$/, '').split('/');
+    const code = parts[parts.length - 1];
+    const parsed = new URL(embedUrl);
+    const apiUrl = `${parsed.protocol}//${parsed.host}/api/videos/${code}`;
+
+    const resp = await fetch(getProxy ? getProxy(apiUrl) : apiUrl, {
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const playback = data && data.playback;
+    if (!playback || !playback.key_parts || !playback.payload || !playback.iv) return null;
+
+    const b64ToUint8 = (str) => {
+      const t = str.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = t.length % 4 === 0 ? 0 : 4 - (t.length % 4);
+      const bin = atob(t + '='.repeat(pad));
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return arr;
+    };
+
+    const qa = {};
+    for (let n = 1; n <= 20; n += 1) qa[String(n)] = [n, 31 - n];
+    const idxs = qa[String(playback.version).trim()];
+    let chosenParts = playback.key_parts;
+    if (idxs) {
+      const [a, i] = idxs;
+      if (a >= 1 && a <= playback.key_parts.length && i >= 1 && i <= playback.key_parts.length) {
+        chosenParts = [playback.key_parts[a - 1], playback.key_parts[i - 1]];
+      }
+    }
+
+    const keyBufs = chosenParts.map(b64ToUint8);
+    const totalKeyLen = keyBufs.reduce((sum, b) => sum + b.length, 0);
+    const fullKey = new Uint8Array(totalKeyLen);
+    let offset = 0;
+    for (const b of keyBufs) { fullKey.set(b, offset); offset += b.length; }
+
+    const iv = b64ToUint8(playback.iv);
+    const payloadWithTag = b64ToUint8(playback.payload);
+
+    const subtle = window.crypto && window.crypto.subtle;
+    if (!subtle) return null;
+
+    const importedKey = await subtle.importKey('raw', fullKey, 'AES-GCM', false, ['decrypt']);
+    const decrypted = await subtle.decrypt({ name: 'AES-GCM', iv: iv }, importedKey, payloadWithTag);
+    const jsonStr = new TextDecoder().decode(decrypted);
+    const sourcesData = JSON.parse(jsonStr);
+    const sources = sourcesData.sources || [];
+    if (sources.length > 0 && sources[0].url) {
+      return sources[0].url;
+    }
+  } catch (err) { }
+  return null;
+}
+
 async function tryExtractDirectHls(streamUrl) {
   if (!streamUrl) return null;
   if (streamUrl.includes('.m3u8')) return streamUrl;
 
-  // ── Desempaquetador Dean Edwards (Lulu, Streamwish, VOE) ──
+  const corsProxies = [
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
+  ];
+
+  // 1. Byse / Streamwish / Delta (Desencriptado nativo AES-256-GCM)
+  if (streamUrl.includes('byseraguci.com') || streamUrl.includes('streamwish') || streamUrl.includes('/api/videos/')) {
+    // Probar directo primero si CORS lo permite o a través de proxys
+    let directByse = await extractByseNativeM3u8(streamUrl, null);
+    if (directByse) return directByse;
+    for (const getProxy of corsProxies) {
+      directByse = await extractByseNativeM3u8(streamUrl, getProxy);
+      if (directByse) return directByse;
+    }
+  }
+
+  // 2. VOE / Gamma / jamespatterncamera (Desencriptado nativo JSON)
+  const isVoe = streamUrl.includes('voe.sx') || streamUrl.includes('voeunblock') ||
+                streamUrl.includes('voe-unblock') || streamUrl.includes('jamespatterncamera.com') ||
+                streamUrl.includes('susanexpectcare.com') || streamUrl.includes('arianathankspecial.com') ||
+                streamUrl.includes('shannoncoldalready.com');
+
+  for (const getProxy of corsProxies) {
+    try {
+      const res = await fetch(getProxy(streamUrl), { signal: AbortSignal.timeout(7000) });
+      if (!res.ok) continue;
+      const html = await res.text();
+      if (!html) continue;
+
+      // Verificar si hay payload de VOE en este HTML
+      let voeM3u8 = extractVoePayloadM3u8(html);
+      if (voeM3u8) return voeM3u8;
+
+      // Seguir window.location redirect (VOE suele redirigir a un segundo dominio como arianathankspecial)
+      const redirMatch = html.match(/window\.location(?:\.href)?\s*=\s*['"]([^'"]{10,})['"]/);
+      if (redirMatch && redirMatch[1].startsWith('http')) {
+        try {
+          const res2 = await fetch(getProxy(redirMatch[1]), { signal: AbortSignal.timeout(7000) });
+          if (res2.ok) {
+            const html2 = await res2.text();
+            voeM3u8 = extractVoePayloadM3u8(html2);
+            if (voeM3u8) return voeM3u8;
+            let m3u8Fallback = extractFromHtml(html2);
+            if (m3u8Fallback) return m3u8Fallback;
+          }
+        } catch (_) { }
+      }
+
+      let m3u8 = extractFromHtml(html);
+      if (m3u8) return m3u8;
+
+      // Seguir meta-refresh
+      const metaMatch = html.match(/<meta[^>]+http-equiv=["']refresh["'][^>]+content=["'][^;]*;\s*url=([^"']+)["']/i);
+      if (metaMatch && metaMatch[1].startsWith('http')) {
+        try {
+          const res3 = await fetch(getProxy(metaMatch[1]), { signal: AbortSignal.timeout(7000) });
+          if (res3.ok) {
+            const html3 = await res3.text();
+            voeM3u8 = extractVoePayloadM3u8(html3);
+            if (voeM3u8) return voeM3u8;
+            m3u8 = extractFromHtml(html3);
+            if (m3u8) return m3u8;
+          }
+        } catch (_) { }
+      }
+    } catch (_) { }
+  }
+
+  // ── Desempaquetador Dean Edwards (LuluStream, etc.) ──
   function unpackPacked(html) {
     const m = html.match(/eval\(function\(p,a,c,k,e,d\)[\s\S]*?\('(.*?)',(\d+),(\d+),'(.*?)'\.split\('\|'\)/);
     if (!m) return null;
@@ -1373,28 +1532,20 @@ async function tryExtractDirectHls(streamUrl) {
 
   function findM3u8(text) {
     if (!text) return null;
-    // 1. Entre comillas con .m3u8
     let m = text.match(/["']([^"']{10,}\.m3u8[^"']*)["']/);
     if (m && m[1] && m[1].startsWith('http')) return m[1];
-    // 2. URL directa sin comillas
     m = text.match(/https?:\/\/[^\s"'<>]+\.m3u8[^\s"'<>]*/);
     if (m) return m[0];
-    // 3. jwplayer / Streamwish: file: "url"
     m = text.match(/["']file['"]\s*:\s*["']([^"']{10,})["']/);
     if (m && m[1] && m[1].startsWith('http')) return m[1];
-    // 4. VOE: hls = "url" or hls: "url"
     m = text.match(/hls["'_\s]*[:=]\s*["']([^"']{10,}\.m3u8[^"']*)["']/i);
     if (m) return m[1];
-    // 5. sources:[{file:"url"}] JWPlayer
     m = text.match(/sources\s*:\s*\[[\s\S]*?["']([^"']+\.m3u8[^"']*)["']/);
     if (m) return m[1];
-    // 6. var vhls = "url"
     m = text.match(/var\s+(?:vhls|hls_link|hlsUrl|stream)\s*=\s*["']([^"']+\.m3u8[^"']*)["']/i);
     if (m) return m[1];
-    // 7. VOE wibble / generic embedded URL
-    m = text.match(/(?:wibble|master|playlist|hls)\s*[=:]\s*["']([^"']{15,}\.m3u8[^"']*)["\']/i);
+    m = text.match(/(?:wibble|master|playlist|hls)\s*[=:]\s*["']([^"']{15,}\.m3u8[^"']*)["']/i);
     if (m) return m[1];
-    // 8. Any quoted http URL with .m3u8
     m = text.match(/["'](https?:\/\/[^"'\s]{15,}\.m3u8[^"'\s]*?)["']/);
     if (m) return m[1];
     return null;
@@ -1402,44 +1553,12 @@ async function tryExtractDirectHls(streamUrl) {
 
   function extractFromHtml(html) {
     if (!html) return null;
+    const voe = extractVoePayloadM3u8(html);
+    if (voe) return voe;
     const unpacked = unpackPacked(html);
     return findM3u8(unpacked || html) || (unpacked ? findM3u8(html) : null);
   }
 
-  const corsProxies = [
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
-  ];
-
-  for (const getProxy of corsProxies) {
-    try {
-      const res = await fetch(getProxy(streamUrl), { signal: AbortSignal.timeout(6000) });
-      if (!res.ok) continue;
-      const html = await res.text();
-      if (!html) continue;
-
-      let m3u8 = extractFromHtml(html);
-      if (m3u8) return m3u8;
-
-      // Seguir window.location redirect (VOE)
-      const redirMatch = html.match(/window\.location(?:\.href)?\s*=\s*['"]([^'"]{10,})['"]/);
-      if (redirMatch && redirMatch[1].startsWith('http')) {
-        try {
-          const res2 = await fetch(getProxy(redirMatch[1]), { signal: AbortSignal.timeout(6000) });
-          if (res2.ok) { m3u8 = extractFromHtml(await res2.text()); if (m3u8) return m3u8; }
-        } catch (_) { }
-      }
-      // Seguir meta-refresh
-      const metaMatch = html.match(/<meta[^>]+http-equiv=["']refresh["'][^>]+content=["'][^;]*;\s*url=([^"']+)["']/i);
-      if (metaMatch && metaMatch[1].startsWith('http')) {
-        try {
-          const res3 = await fetch(getProxy(metaMatch[1]), { signal: AbortSignal.timeout(6000) });
-          if (res3.ok) { m3u8 = extractFromHtml(await res3.text()); if (m3u8) return m3u8; }
-        } catch (_) { }
-      }
-    } catch (_) { }
-  }
   return null;
 }
 
@@ -1511,7 +1630,11 @@ async function loadStealthEmbed(wrap, anime, epNumber, srcUrl, serverKey = 'gamm
       window.showADBOverlay  = () => {};
       window.showGuardOverlay = () => {};
       window.checkADB = () => false;
-      window.sk = true;  // flag bypass VOE
+      window.sk = true;  // flag bypass VOE sandbox check
+      // Listen for sk injection from parent frame
+      window.addEventListener('message', function(e) {
+        if (e.data && (e.data.type === 'kawaii_sk' || e.data.type === 'kawaii_stealth')) { window.sk = true; }
+      }, false);
 
       // --- Interceptar popups ---
       const _fakeWin = {

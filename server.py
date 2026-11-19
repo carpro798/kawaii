@@ -3,13 +3,11 @@
 KAWAII ANIMES — Servidor de streaming con proxy stealth anti-anuncios.
 Replica exactamente la fórmula de headers y lógica del binario cifrado (.app / composeApp-desktop.jar).
 
-Fórmula de la app cifrada (StreamingRequestPolicy.kt decompilado):
-  - User-Agent: Windows Desktop Chrome 120 (NO Linux)
-  - Accept-Language: es-419,es;q=0.9,en;q=0.8
-  - Sec-Fetch-* headers completos (como navegador real)
-  - Referer + Origin derivados de la URL del stream
-  - Embed headers: Sec-Fetch-Site=cross-site, Mode=navigate, Dest=document
-  - HLS/segment headers: Sec-Fetch-Site=same-origin, Mode=cors, Dest=empty
+Extracción y Desencriptado Directo (CERO PUBLICIDAD):
+  - Servidor Gamma (VOE / jamespatterncamera): desencriptado de payload application/json
+  - Servidor Delta (Byse / Streamwish / byseraguci): desencriptado de /api/videos/{code} con AES-256-GCM
+  - Servidor Epsilon (LuluStream / luluvdoo): desencriptado Dean Edwards packer
+  - Headers completos de navegador (StreamingRequestPolicy.kt): Sec-Fetch-*, Origin, Referer
 """
 
 import http.server
@@ -22,6 +20,7 @@ import shutil
 import threading
 import subprocess
 import re
+import base64
 import urllib.request
 import urllib.parse
 import webbrowser
@@ -45,7 +44,7 @@ ACTIVE_DOWNLOADS = {}
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Perfiles de User-Agent  (igual que StreamingClientProfile en el .app)
+# Perfiles de User-Agent (igual que StreamingClientProfile en el .app)
 # ──────────────────────────────────────────────────────────────────────────────
 UA_DESKTOP = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -60,7 +59,7 @@ UA_MOBILE = (
 ACCEPT_LANGUAGE = "es-419,es;q=0.9,en;q=0.8"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Generadores de headers  (replica StreamingRequestPolicy.kt)
+# Generadores de headers (replica StreamingRequestPolicy.kt)
 # ──────────────────────────────────────────────────────────────────────────────
 
 def _origin_from_url(url: str) -> str:
@@ -71,10 +70,6 @@ def _origin_from_url(url: str) -> str:
     return ""
 
 def embed_headers(referer_url: str | None = None, with_sec_fetch: bool = True) -> dict:
-    """
-    Headers para cargar la página embed del reproductor.
-    Replica embedHeaders() de StreamingRequestPolicy.kt.
-    """
     h = {
         "User-Agent": UA_DESKTOP,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -90,12 +85,7 @@ def embed_headers(referer_url: str | None = None, with_sec_fetch: bool = True) -
         h["Referer"] = referer_url
     return h
 
-
 def hls_headers(stream_url: str, referer_url: str) -> dict:
-    """
-    Headers para peticiones de segmentos/playlists HLS.
-    Replica playbackResourceHeaders() de StreamingRequestPolicy.kt.
-    """
     origin = _origin_from_url(referer_url) or _origin_from_url(stream_url)
     return {
         "User-Agent": UA_DESKTOP,
@@ -108,31 +98,13 @@ def hls_headers(stream_url: str, referer_url: str) -> dict:
         "Sec-Fetch-Dest": "empty",
     }
 
-
-def api_headers(referer_url: str, origin_url: str, accept: str = "*/*") -> dict:
-    """
-    Headers para peticiones de API (AniList, etc.).
-    Replica apiHeaders() de StreamingRequestPolicy.kt.
-    """
-    return {
-        "User-Agent": UA_MOBILE,
-        "Accept": accept,
-        "Accept-Language": ACCEPT_LANGUAGE,
-        "Referer": referer_url,
-        "Origin": origin_url,
-        "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Dest": "empty",
-    }
-
 # ──────────────────────────────────────────────────────────────────────────────
-# Snippet stealth anti-anuncios (inyectado en el HTML del embed)
+# Snippet stealth anti-anuncios
 # ──────────────────────────────────────────────────────────────────────────────
 STEALTH_SNIPPET = """
 <script>
 (function() {
   'use strict';
-  // 1. Neutralizar detectores de AdBlock
   window.justDetectAdblock = {
     detectAnyAdblocker: () => Promise.resolve(false),
     detectBait: () => Promise.resolve(false)
@@ -154,13 +126,11 @@ STEALTH_SNIPPET = """
   window.BlockAdBlock = window.FuckAdBlock;
   window.blockAdBlock = window.fuckAdBlock;
 
-  // 2. Silenciar overlays de servidores (Lulu, Streamwish, VOE…)
   window.showADBOverlay  = () => {};
   window.showGuardOverlay = () => {};
   window.checkADB = () => false;
-  window.sk = true;   // flag bypass VOE
+  window.sk = true;
 
-  // 3. Interceptar popups de anuncios
   const _fakeWin = {
     closed: false, name: '',
     focus(){}, blur(){},
@@ -173,7 +143,6 @@ STEALTH_SNIPPET = """
     return _fakeWin;
   };
 
-  // 4. Bloquear clicks en enlaces externos (anuncios)
   document.addEventListener('click', e => {
     const a = e.target && e.target.closest ? e.target.closest('a') : null;
     if (a && a.href && !a.href.startsWith('javascript:')) {
@@ -186,7 +155,6 @@ STEALTH_SNIPPET = """
     }
   }, true);
 
-  // 5. Eliminar loops debugger
   const _origSI = window.setInterval;
   window.setInterval = (fn, d) => {
     if (fn && typeof fn === 'function' && fn.toString().includes('debugger')) return -1;
@@ -195,7 +163,6 @@ STEALTH_SNIPPET = """
 })();
 </script>
 <style>
-/* Ocultar banners/overlays sin romper el reproductor */
 .a85399,.b85399,#adbd,.overdiv,.jw-rightclick,.jw-logo-button,
 [class*="ad-overlay"],[id*="ad-overlay"],[id*="adblock"],[class*="adblock"],
 [id*="anti-adblock"],.adblock-banner,#adblock-msg,.adb-holder,
@@ -210,11 +177,8 @@ div[style*="z-index: 2147483647"] {
 </style>
 """
 
-
 def inject_stealth(final_url: str, html: str) -> str:
-    """Inyecta base tag + snippet stealth en el <head> del HTML del embed."""
     injected = f'<base href="{final_url}">' + STEALTH_SNIPPET
-    # Neutralizar showADBOverlay en código empaquetado
     html = html.replace('showADBOverlay()', '/* noop */')
     if re.search(r'<head', html, re.IGNORECASE):
         html = re.sub(r'(<head[^>]*>)', r'\1' + injected, html, flags=re.IGNORECASE, count=1)
@@ -223,10 +187,9 @@ def inject_stealth(final_url: str, html: str) -> str:
     return html
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Extracción HLS de LuluStream (Dean Edwards packer)
+# Desencriptadores Nativos de Streams (VOE, Byse/Delta, LuluStream)
 # ──────────────────────────────────────────────────────────────────────────────
 def _unpack_p_a_c_k_e_d(html: str) -> str | None:
-    """Desempaqueta el obfuscador Dean Edwards eval(function(p,a,c,k,e,d))."""
     m = re.search(
         r"eval\(function\(p,a,c,k,e,d\)\{.*?\}\('(.*?)',(\d+),(\d+),'(.*?)'\.split\('\|'\)",
         html, re.DOTALL
@@ -244,41 +207,169 @@ def _unpack_p_a_c_k_e_d(html: str) -> str | None:
             p = re.sub(r"\b" + enc(i, a) + r"\b", k[i], p)
     return p
 
+def _rot13(s: str) -> str:
+    res = []
+    for c in s:
+        code = ord(c)
+        if 65 <= code <= 90:
+            res.append(chr((code - 65 + 13) % 26 + 65))
+        elif 97 <= code <= 122:
+            res.append(chr((code - 97 + 13) % 26 + 97))
+        else:
+            res.append(c)
+    return "".join(res)
+
+def _extract_voe_payload(html: str) -> str | None:
+    """Desencripta el stream directo de VOE a partir del bloque JSON en el HTML."""
+    m = re.search(r'<script\s+type=["\']application/json["\']\s*>\s*\["([^"]+)"\]\s*</script>', html)
+    if not m:
+        return None
+    try:
+        raw = m.group(1)
+        s1 = _rot13(raw)
+        markers = ['@$', '^^', '~@', '%?', '*~', '!!', '#&']
+        s2 = s1
+        for marker in markers:
+            s2 = s2.replace(marker, '_')
+        s3 = s2.replace('_', '')
+        s4 = base64.b64decode(s3).decode('latin1')
+        s5 = "".join(chr(ord(c) - 3) for c in s4)
+        s6 = s5[::-1]
+        s7 = base64.b64decode(s6).decode('utf-8')
+        data = json.loads(s7)
+        return data.get('source') or data.get('direct_access_url')
+    except Exception as e:
+        print(f"[Kawaii] Error desencriptando VOE payload: {e}")
+        return None
+
+def _extract_byse_stream(embed_url: str) -> str | None:
+    """Desencripta el stream directo de Byse / Streamwish / Delta con AES-256-GCM."""
+    try:
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    except Exception:
+        return None
+
+    try:
+        parts = embed_url.rstrip('/').split('/')
+        code = parts[-1]
+        parsed = urllib.parse.urlparse(embed_url)
+        api_url = f"{parsed.scheme}://{parsed.netloc}/api/videos/{code}"
+
+        req = urllib.request.Request(api_url, headers={
+            'User-Agent': UA_DESKTOP,
+            'Accept': 'application/json, text/plain, */*',
+            'Referer': embed_url
+        })
+        resp = urllib.request.urlopen(req, timeout=10)
+        data = json.loads(resp.read().decode('utf-8'))
+        playback = data.get('playback')
+        if not playback or not playback.get('key_parts') or not playback.get('payload'):
+            return None
+
+        def b64_decode_bytes(s: str) -> bytes:
+            t = s.replace('-', '+').replace('_', '/')
+            pad = len(t) % 4
+            if pad:
+                t += '=' * (4 - pad)
+            return base64.b64decode(t)
+
+        version = str(playback.get('version', '')).strip()
+        key_parts = playback.get('key_parts', [])
+
+        qa = {str(n): [n, 31 - n] for n in range(1, 21)}
+        idxs = qa.get(version)
+        if idxs and 1 <= idxs[0] <= len(key_parts) and 1 <= idxs[1] <= len(key_parts):
+            chosen_parts = [key_parts[idxs[0] - 1], key_parts[idxs[1] - 1]]
+        else:
+            chosen_parts = key_parts
+
+        key = b"".join(b64_decode_bytes(p) for p in chosen_parts)
+        iv = b64_decode_bytes(playback['iv'])
+        payload_with_tag = b64_decode_bytes(playback['payload'])
+
+        aesgcm = AESGCM(key)
+        decrypted = aesgcm.decrypt(iv, payload_with_tag, None).decode('utf-8')
+        sources_data = json.loads(decrypted)
+        sources = sources_data.get('sources', [])
+        if sources and sources[0].get('url'):
+            return sources[0].get('url')
+    except Exception as e:
+        print(f"[Kawaii] Byse AES-256-GCM error: {e}")
+    return None
+
+def _resolve_redirect_chain(url: str, depth: int = 0) -> tuple[str, str]:
+    if depth > 6:
+        return url, ""
+    headers = embed_headers(referer_url=_origin_from_url(url) + "/", with_sec_fetch=True)
+    try:
+        req  = urllib.request.Request(url, headers=headers)
+        resp = urllib.request.urlopen(req, timeout=15)
+        final = resp.url
+        html  = resp.read().decode("utf-8", errors="ignore")
+        m = re.search(r'window\.location(?:\.href)?\s*=\s*[\'"]([^\'"]+)[\'"]', html)
+        if m and m.group(1).startswith("http") and m.group(1) != url:
+            return _resolve_redirect_chain(m.group(1), depth + 1)
+        return final, html
+    except Exception as e:
+        print(f"[Kawaii] redirect chain error {url}: {e}")
+        return url, ""
 
 def extract_m3u8_from_embed(embed_url: str) -> str | None:
     """
-    Obtiene la URL directa .m3u8 de un embed de LuluStream/Streamwish/VOE.
-    Usa los mismos headers que el .app (embed_headers con Sec-Fetch-*).
+    Extrae la URL directa .m3u8 de cualquier servidor:
+    - Gamma (VOE / jamespatterncamera): desencriptación nativa de JSON payload
+    - Delta (Byse / Streamwish): desencriptación nativa AES-256-GCM
+    - Epsilon (LuluStream): desempaquetador Dean Edwards
     """
-    referer = _origin_from_url(embed_url) + "/"
-    headers = embed_headers(referer_url=referer, with_sec_fetch=True)
-    try:
-        req  = urllib.request.Request(embed_url, headers=headers)
-        html = urllib.request.urlopen(req, timeout=15).read().decode("utf-8", errors="ignore")
-    except Exception as e:
-        print(f"[Kawaii] extract_m3u8: error cargando {embed_url}: {e}")
-        return None
+    # 1. Delta / Byse / Streamwish
+    if "byseraguci.com" in embed_url or "streamwish" in embed_url or "/api/videos/" in embed_url:
+        byse_url = _extract_byse_stream(embed_url)
+        if byse_url:
+            print(f"[Kawaii] ✅ Desencriptado nativo Byse/Delta: {byse_url[:80]}...")
+            return byse_url
 
-    # Desempaquetar si está obfuscado
+    # 2. Resolver redirecciones para VOE y LuluStream
+    final_url, html = _resolve_redirect_chain(embed_url)
+    if not html:
+        referer = _origin_from_url(embed_url) + "/"
+        headers = embed_headers(referer_url=referer, with_sec_fetch=True)
+        try:
+            req  = urllib.request.Request(embed_url, headers=headers)
+            html = urllib.request.urlopen(req, timeout=15).read().decode("utf-8", errors="ignore")
+            final_url = embed_url
+        except Exception as e:
+            print(f"[Kawaii] extract_m3u8 error {embed_url}: {e}")
+            return None
+
+    # 3. Gamma / VOE JSON payload
+    voe_url = _extract_voe_payload(html)
+    if voe_url:
+        print(f"[Kawaii] ✅ Desencriptado nativo VOE/Gamma: {voe_url[:80]}...")
+        return voe_url
+
+    # 4. Desempaquetar Dean Edwards packer (LuluStream)
     unpacked = _unpack_p_a_c_k_e_d(html)
     source   = unpacked if unpacked else html
 
-    # Buscar .m3u8
     m = re.search(r'["\']([^"\']+\.m3u8[^"\']*)["\']', source)
     if m:
         return m.group(1)
-    # Buscar directamente en el HTML sin comillas
+
     m2 = re.search(r'https?://[^\s"\'<>]+\.m3u8[^\s"\'<>]*', source)
     if m2:
         return m2.group(0)
+
+    m3 = re.search(r'["\']file[\'"]\s*:\s*["\']([^"\']+)["\']', source)
+    if m3 and ('.m3u8' in m3.group(1) or 'stream' in m3.group(1)):
+        return m3.group(1)
+
+    m4 = re.search(r'hls[_\s]*["\']?\s*[:=]\s*["\']([^"\']+\.m3u8[^"\']*)["\']', source, re.IGNORECASE)
+    if m4:
+        return m4.group(1)
+
     return None
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Resolución de redirecciones del embed (HTTP + JS location)
-# ──────────────────────────────────────────────────────────────────────────────
 def resolve_embed(url: str, depth: int = 0) -> tuple[str, str]:
-    """Sigue redirecciones HTTP y JS para obtener el HTML final del embed."""
     if depth > 5:
         return url, ""
     headers = embed_headers(referer_url=_origin_from_url(url) + "/", with_sec_fetch=True)
@@ -287,7 +378,6 @@ def resolve_embed(url: str, depth: int = 0) -> tuple[str, str]:
         resp = urllib.request.urlopen(req, timeout=15)
         final_url = resp.url
         html = resp.read().decode("utf-8", errors="ignore")
-        # Seguir redirección JS
         m = re.search(r'window\.location(?:\.href)?\s*=\s*[\'"]([^\'"]+)[\'"]', html)
         if m and m.group(1).startswith("http"):
             return resolve_embed(m.group(1), depth + 1)
@@ -300,10 +390,6 @@ def resolve_embed(url: str, depth: int = 0) -> tuple[str, str]:
         )
         return url, err_html
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Reescritura de playlists HLS (proxy local)
-# ──────────────────────────────────────────────────────────────────────────────
 def rewrite_m3u8(content: str, base_url: str, referer: str) -> str:
     lines = []
     for line in content.splitlines():
@@ -332,10 +418,6 @@ def rewrite_m3u8(content: str, base_url: str, referer: str) -> str:
                 )
     return "\n".join(lines)
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Utilidades generales
-# ──────────────────────────────────────────────────────────────────────────────
 def get_local_ip() -> str:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -346,7 +428,6 @@ def get_local_ip() -> str:
     except Exception:
         return "127.0.0.1"
 
-
 def load_index() -> list:
     if os.path.exists(DOWNLOADS_INDEX):
         try:
@@ -356,11 +437,9 @@ def load_index() -> list:
             return []
     return []
 
-
 def save_index(entries: list):
     with open(DOWNLOADS_INDEX, "w", encoding="utf-8") as f:
         json.dump(entries, f, ensure_ascii=False, indent=2)
-
 
 def get_ffmpeg() -> str:
     local_win = os.path.join(BUNDLE_DIR, "app", "resources", "ffmpeg.exe")
@@ -379,10 +458,6 @@ def get_ffmpeg() -> str:
         pass
     return "ffmpeg"
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Descarga de episodios (ffmpeg)
-# ──────────────────────────────────────────────────────────────────────────────
 def download_episode_job(key, stream_url, anime_title, ep_number, anime_id, poster=""):
     ffmpeg    = get_ffmpeg()
     safe      = re.sub(r'[^\w\s-]', '', anime_title)[:40].strip().replace(" ", "_")
@@ -396,12 +471,11 @@ def download_episode_job(key, stream_url, anime_title, ep_number, anime_id, post
     }
     try:
         actual_url = stream_url
-        if "luluvdoo.com" in stream_url or "lulustream.com" in stream_url:
-            m3u8 = extract_m3u8_from_embed(stream_url)
-            if m3u8:
-                actual_url = m3u8
+        m3u8 = extract_m3u8_from_embed(stream_url)
+        if m3u8:
+            actual_url = m3u8
 
-        ref_parsed    = urllib.parse.urlparse(stream_url)
+        ref_parsed = urllib.parse.urlparse(stream_url)
         stream_referer = (f"{ref_parsed.scheme}://{ref_parsed.netloc}/"
                           if ref_parsed.netloc else "https://luluvdoo.com/")
 
@@ -463,7 +537,6 @@ def download_episode_job(key, stream_url, anime_title, ep_number, anime_id, post
         ACTIVE_DOWNLOADS[key] = {"status": "error", "progress": 0, "error": str(ex)}
         print(f"[Kawaii DL] ❌ Error: {ex}")
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # HTTP Handler
 # ──────────────────────────────────────────────────────────────────────────────
@@ -472,7 +545,7 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=SITE_DIR, **kwargs)
 
     def log_message(self, fmt, *args):
-        pass  # silenciar logs de archivos estáticos
+        pass
 
     def end_headers(self):
         self.send_header("Access-Control-Allow-Origin",  "*")
@@ -493,7 +566,6 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def serve_range(self, filepath, content_type="video/mp4"):
-        """Sirve un archivo local con soporte de rango (Range request)."""
         try:
             size   = os.path.getsize(filepath)
             rh     = self.headers.get("Range")
@@ -543,20 +615,18 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
         path   = parsed.path
         params = urllib.parse.parse_qs(parsed.query)
 
-        # ── /api/stream-info  ────────────────────────────────────────────────
+        # ── /api/stream-info ─────────────────────────────────────────────────
         if path == "/api/stream-info":
             url = params.get("url", [""])[0]
             if not url:
                 self.send_json({"error": "URL requerida"}, 400); return
 
-            # Si ya es m3u8 directo
             if ".m3u8" in url:
                 murl = (f"/api/hls/master.m3u8"
                         f"?url={urllib.parse.quote_plus(url)}"
                         f"&ref={urllib.parse.quote_plus(url)}")
                 self.send_json({"status": "ok", "mode": "hls", "url": murl}); return
 
-            # Intentar extraer m3u8 del embed (cero anuncios)
             m3u8 = extract_m3u8_from_embed(url)
             if m3u8:
                 ref = _origin_from_url(url) + "/"
@@ -565,11 +635,10 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
                         f"&ref={urllib.parse.quote_plus(ref)}")
                 self.send_json({"status": "ok", "mode": "hls", "url": murl}); return
 
-            # Fallback: embed con stealth
             purl = f"/api/player?url={urllib.parse.quote_plus(url)}"
             self.send_json({"status": "ok", "mode": "embed", "player": purl}); return
 
-        # ── /api/hls/master.m3u8  ────────────────────────────────────────────
+        # ── /api/hls/master.m3u8 ─────────────────────────────────────────────
         if path == "/api/hls/master.m3u8":
             target  = params.get("url", [""])[0]
             referer = params.get("ref", ["https://luluvdoo.com/"])[0]
@@ -592,7 +661,7 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(500); self.end_headers()
             return
 
-        # ── /api/hls/sub.m3u8  ───────────────────────────────────────────────
+        # ── /api/hls/sub.m3u8 ────────────────────────────────────────────────
         if path == "/api/hls/sub.m3u8":
             target  = params.get("url", [""])[0]
             referer = params.get("ref", ["https://luluvdoo.com/"])[0]
@@ -615,7 +684,7 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(500); self.end_headers()
             return
 
-        # ── /api/hls/segment  ────────────────────────────────────────────────
+        # ── /api/hls/segment ─────────────────────────────────────────────────
         if path == "/api/hls/segment":
             target  = params.get("url", [""])[0]
             referer = params.get("ref", ["https://luluvdoo.com/"])[0]
@@ -637,7 +706,7 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(500); self.end_headers()
             return
 
-        # ── /api/player  (embed con stealth) ─────────────────────────────────
+        # ── /api/player (embed con stealth) ──────────────────────────────────
         if path == "/api/player":
             target = params.get("url", [""])[0]
             if not target:
@@ -652,7 +721,7 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(html_bytes)
             return
 
-        # ── /api/downloads  ───────────────────────────────────────────────────
+        # ── /api/downloads ───────────────────────────────────────────────────
         if path == "/api/downloads":
             entries      = load_index()
             keys_indexed = {e["key"] for e in entries}
@@ -668,7 +737,7 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
                     })
             self.send_json(entries); return
 
-        # ── /api/descargar  ───────────────────────────────────────────────────
+        # ── /api/descargar ───────────────────────────────────────────────────
         if path == "/api/descargar":
             url      = params.get("url",   [""])[0]
             title    = urllib.parse.unquote_plus(params.get("title",   ["Anime"])[0])
@@ -693,13 +762,13 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
             ).start()
             self.send_json({"status": "iniciando", "key": key}); return
 
-        # ── /api/progreso  ────────────────────────────────────────────────────
+        # ── /api/progreso ────────────────────────────────────────────────────
         if path == "/api/progreso":
             key  = params.get("key", [""])[0]
             info = ACTIVE_DOWNLOADS.get(key)
             self.send_json(info if info else {"status": "no_encontrado"}); return
 
-        # ── /api/borrar  ──────────────────────────────────────────────────────
+        # ── /api/borrar ──────────────────────────────────────────────────────
         if path == "/api/borrar":
             key     = params.get("key", [""])[0]
             entries = load_index()
@@ -715,7 +784,7 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json({"status": "no_encontrado"}, 404)
             return
 
-        # ── /descargas/*  (rango) ─────────────────────────────────────────────
+        # ── /descargas/* (rango) ─────────────────────────────────────────────
         if path.startswith("/descargas/"):
             fname = urllib.parse.unquote(path[len("/descargas/"):])
             fpath = os.path.join(DOWNLOADS_DIR, fname)
@@ -726,7 +795,6 @@ class KawaiiHandler(http.server.SimpleHTTPRequestHandler):
         # ── Archivos estáticos ────────────────────────────────────────────────
         super().do_GET()
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # Entry point
 # ──────────────────────────────────────────────────────────────────────────────
@@ -736,7 +804,7 @@ if __name__ == "__main__":
     with socketserver.TCPServer(("", PORT), KawaiiHandler) as httpd:
         print("=" * 65)
         print("   🌸 KAWAII ANIMES — SERVIDOR CON DESCARGAS Y AD‑SHIELD 🌸")
-        print("   (Fórmula replicada del binario cifrado — StreamingRequestPolicy)")
+        print("   (Desencriptado Nativo de Streams: VOE, Streamwish, LuluStream)")
         print("=" * 65)
         print(f"\n  💻 Acceso local:        http://localhost:{PORT}")
         print(f"  📱 Acceso desde móvil:  http://{local_ip}:{PORT}")
