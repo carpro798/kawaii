@@ -1361,48 +1361,99 @@ async function tryExtractDirectHls(streamUrl) {
   if (!streamUrl) return null;
   if (streamUrl.includes('.m3u8')) return streamUrl;
 
+  // ── Desempaquetador Dean Edwards (Lulu, Streamwish, VOE) ──
+  function unpackPacked(html) {
+    const m = html.match(/eval\(function\(p,a,c,k,e,d\)[\s\S]*?\('(.*?)',(\d+),(\d+),'(.*?)'\.split\('\|'\)/);
+    if (!m) return null;
+    let p = m[1]; const a = parseInt(m[2], 10); let c = parseInt(m[3], 10); const k = m[4].split('|');
+    const enc = v => (v < a ? '' : enc(Math.floor(v / a))) + ((v = v % a) > 35 ? String.fromCharCode(v + 29) : v.toString(36));
+    while (c--) if (k[c]) p = p.replace(new RegExp('\\b' + enc(c) + '\\b', 'g'), k[c]);
+    return p;
+  }
+
+  function findM3u8(text) {
+    if (!text) return null;
+    // 1. Entre comillas con .m3u8
+    let m = text.match(/["']([^"']{10,}\.m3u8[^"']*)["']/);
+    if (m && m[1] && m[1].startsWith('http')) return m[1];
+    // 2. URL directa sin comillas
+    m = text.match(/https?:\/\/[^\s"'<>]+\.m3u8[^\s"'<>]*/);
+    if (m) return m[0];
+    // 3. jwplayer / Streamwish: file: "url"
+    m = text.match(/["']file['"]\s*:\s*["']([^"']{10,})["']/);
+    if (m && m[1] && m[1].startsWith('http')) return m[1];
+    // 4. VOE: hls = "url" or hls: "url"
+    m = text.match(/hls["'_\s]*[:=]\s*["']([^"']{10,}\.m3u8[^"']*)["']/i);
+    if (m) return m[1];
+    // 5. sources:[{file:"url"}] JWPlayer
+    m = text.match(/sources\s*:\s*\[[\s\S]*?["']([^"']+\.m3u8[^"']*)["']/);
+    if (m) return m[1];
+    // 6. var vhls = "url"
+    m = text.match(/var\s+(?:vhls|hls_link|hlsUrl|stream)\s*=\s*["']([^"']+\.m3u8[^"']*)["']/i);
+    if (m) return m[1];
+    // 7. VOE wibble / generic embedded URL
+    m = text.match(/(?:wibble|master|playlist|hls)\s*[=:]\s*["']([^"']{15,}\.m3u8[^"']*)["\']/i);
+    if (m) return m[1];
+    // 8. Any quoted http URL with .m3u8
+    m = text.match(/["'](https?:\/\/[^"'\s]{15,}\.m3u8[^"'\s]*?)["']/);
+    if (m) return m[1];
+    return null;
+  }
+
+  function extractFromHtml(html) {
+    if (!html) return null;
+    const unpacked = unpackPacked(html);
+    return findM3u8(unpacked || html) || (unpacked ? findM3u8(html) : null);
+  }
+
   const corsProxies = [
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`
+    u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
   ];
 
-  for (const getUrl of corsProxies) {
+  for (const getProxy of corsProxies) {
     try {
-      const res = await fetch(getUrl(streamUrl), { signal: AbortSignal.timeout(3500) });
+      const res = await fetch(getProxy(streamUrl), { signal: AbortSignal.timeout(6000) });
       if (!res.ok) continue;
       const html = await res.text();
+      if (!html) continue;
 
-      // Desempaquetar Dean Edwards Packer (LuluStream, Streamwish, etc.)
-      const m = html.match(/eval\(function\(p,a,c,k,e,d\)[\s\S]*?\('(.*?)',(\d+),(\d+),'(.*?)'\.split\('\|'\)/);
-      if (m) {
-        let p = m[1];
-        const a = parseInt(m[2], 10);
-        let c = parseInt(m[3], 10);
-        const k = m[4].split('|');
-        const e = (val) => (val < a ? '' : e(parseInt(val / a, 10))) + ((val = val % a) > 35 ? String.fromCharCode(val + 29) : val.toString(36));
-        while (c--) {
-          if (k[c]) p = p.replace(new RegExp('\\b' + e(c) + '\\b', 'g'), k[c]);
-        }
-        const m3u8Match = p.match(/https?:\/\/[^\s'"<>]+\.m3u8[^\s'"<>]*/);
-        if (m3u8Match) return m3u8Match[0];
+      let m3u8 = extractFromHtml(html);
+      if (m3u8) return m3u8;
+
+      // Seguir window.location redirect (VOE)
+      const redirMatch = html.match(/window\.location(?:\.href)?\s*=\s*['"]([^'"]{10,})['"]/);
+      if (redirMatch && redirMatch[1].startsWith('http')) {
+        try {
+          const res2 = await fetch(getProxy(redirMatch[1]), { signal: AbortSignal.timeout(6000) });
+          if (res2.ok) { m3u8 = extractFromHtml(await res2.text()); if (m3u8) return m3u8; }
+        } catch (_) { }
       }
-
-      const mDirect = html.match(/https?:\/\/[^\s'"<>]+\.m3u8[^\s'"<>]*/);
-      if (mDirect) return mDirect[0];
-    } catch (e) { }
+      // Seguir meta-refresh
+      const metaMatch = html.match(/<meta[^>]+http-equiv=["']refresh["'][^>]+content=["'][^;]*;\s*url=([^"']+)["']/i);
+      if (metaMatch && metaMatch[1].startsWith('http')) {
+        try {
+          const res3 = await fetch(getProxy(metaMatch[1]), { signal: AbortSignal.timeout(6000) });
+          if (res3.ok) { m3u8 = extractFromHtml(await res3.text()); if (m3u8) return m3u8; }
+        } catch (_) { }
+      }
+    } catch (_) { }
   }
   return null;
 }
+
 
 function playDirectOrStealth(wrap, anime, epNumber, streamUrl, serverKey = 'gamma') {
   wrap.innerHTML = `
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--text-muted); background:#050508;">
       <div style="font-size:2.2rem; margin-bottom:1rem; animation: pulse 1.5s infinite;">🌸</div>
       <p style="font-weight:600; color:var(--text-main); font-size:1.1rem;">Iniciando reproducción sin anuncios...</p>
-      <span style="font-size:0.8rem; color:var(--text-muted); margin-top:0.4rem;">Escudo activo: bloqueando ventanas emergentes y publicidad</span>
+      <span style="font-size:0.8rem; color:var(--text-muted); margin-top:0.4rem;">Extrayendo stream directo — todos los servidores sin publicidad</span>
     </div>
   `;
 
+  // Intentar extraer HLS directo para TODOS los servidores (Gamma/Epsilon/Delta)
   tryExtractDirectHls(streamUrl).then(m3u8Url => {
     if (m3u8Url && window.Hls && Hls.isSupported()) {
       wrap.innerHTML = `
@@ -1411,13 +1462,13 @@ function playDirectOrStealth(wrap, anime, epNumber, streamUrl, serverKey = 'gamm
         </video>
       `;
       const video = document.getElementById('native-hls-player');
-      const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+      const hls = new Hls({ enableWorker: true, lowLatencyMode: true, maxBufferLength: 30 });
       hls.loadSource(m3u8Url);
       hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, function () { video.play().catch(() => { }); });
-      hls.on(Hls.Events.ERROR, function (e, errData) {
+      hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => { }); });
+      hls.on(Hls.Events.ERROR, (e, errData) => {
         if (errData && errData.fatal) {
-          try { hls.destroy(); } catch (e) { }
+          try { hls.destroy(); } catch (_) { }
           loadStealthEmbed(wrap, anime, epNumber, streamUrl, serverKey);
         }
       });
@@ -1579,19 +1630,18 @@ async function loadStealthEmbed(wrap, anime, epNumber, srcUrl, serverKey = 'gamm
     return;
   }
 
-  // 3. Fallback directo: Sin atributo sandbox para que servidores como Gamma (VOE)
-  // no activen el detector "Sandbox no permitido / Nuestra infraestructura cuesta dinero"
-  const badgeNotice = (serverKey === 'gamma')
-    ? `<div style="position:absolute; top:12px; right:12px; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); color:#4ade80; font-size:0.75rem; font-weight:600; padding:5px 12px; border-radius:20px; z-index:10; pointer-events:none; border:1px solid rgba(74,222,128,0.3); display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(0,0,0,0.5);">
-        <span>✨ Servidor Gamma</span>
-        <span style="opacity:0.7;">• Sin Publicidad</span>
-       </div>`
-    : (serverKey === 'delta'
-      ? `<div style="position:absolute; top:12px; right:12px; background:rgba(30,20,10,0.9); backdrop-filter:blur(8px); color:#fbbf24; font-size:0.75rem; font-weight:600; padding:5px 12px; border-radius:20px; z-index:10; pointer-events:none; border:1px solid rgba(251,191,36,0.4); display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(0,0,0,0.5);">
-        <span>⚡ Servidor Delta</span>
-        <span style="opacity:0.8;">• Si ves publicidad cambia arriba a Servidor Gamma</span>
-       </div>`
-      : '');
+  // 3. Fallback directo: iframe sin sandbox (para que VOE no active "Sandbox no permitido")
+  // Todos los servidores usan escudo stealth — badge universal "Sin Anuncios"
+  const serverLabels = {
+    gamma: '✨ Servidor Gamma',
+    epsilon: '🎬 Servidor Epsilon',
+    delta: '⚡ Servidor Delta',
+    alpha: '⚡ Servidor Alpha'
+  };
+  const badgeNotice = `<div style="position:absolute; top:12px; right:12px; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); color:#4ade80; font-size:0.75rem; font-weight:600; padding:5px 12px; border-radius:20px; z-index:10; pointer-events:none; border:1px solid rgba(74,222,128,0.3); display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(0,0,0,0.5);">
+      <span>${serverLabels[serverKey] || ('⚡ ' + serverKey)}</span>
+      <span style="opacity:0.7;">• Sin Publicidad</span>
+     </div>`;
 
   wrap.innerHTML = `
     <div class="player-embed-wrapper" style="position:relative; width:100%; height:100%; overflow:hidden; background:#000;">
@@ -1600,12 +1650,23 @@ async function loadStealthEmbed(wrap, anime, epNumber, srcUrl, serverKey = 'gamm
         title="${anime.title} - Cap ${epNumber}"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
         allowfullscreen
-        referrerpolicy="no-referrer"
         style="width:100%; height:100%; border:none;">
       </iframe>
       ${badgeNotice}
     </div>
   `;
+  // Inject sk=true into the iframe after it loads to bypass VOE sandbox detection
+  const _dFrame = wrap.querySelector('iframe.player-iframe');
+  if (_dFrame) {
+    const _trySkInject = () => {
+      try { if (_dFrame.contentWindow) { _dFrame.contentWindow.sk = true; } } catch(_) {}
+      try { (_dFrame.contentWindow || window).postMessage({ type: 'kawaii_sk', sk: true }, '*'); } catch(_) {}
+    };
+    _dFrame.addEventListener('load', _trySkInject);
+    setTimeout(_trySkInject, 500);
+    setTimeout(_trySkInject, 1500);
+    setTimeout(_trySkInject, 3000);
+  }
 }
 
 window.changePlayerServer = function (server) {
